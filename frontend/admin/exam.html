@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes Tutor - Admin Exams & Tests</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body data-admin-page="exams">
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="../../assets/logo.png" alt="SkillFind AI logo" />
+      <div>
+        <div class="title">Notes Tutor</div>
+        <div class="subtitle">Admin Exams & Tests</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <div id="whoami" class="whoami">Not signed in</div>
+      <button id="btnSignOut" class="btn ghost" type="button" disabled>Sign out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- AUTH CARD -->
+  
+
+    <!-- APP -->
+    <section id="appCard" class="card">
+     <div class="tabs">
+  <button class="tab" data-tab="courses">Courses</button>
+  <button class="tab" data-tab="modules">Modules</button>
+  <button class="tab" data-tab="moduleGuides">Module Guides</button>
+  <button class="tab active" data-tab="exams">Exams & Tests</button>
+  <button class="tab" data-tab="requests">Enrollment Requests</button>
+  <button class="tab" data-tab="chapters">Chapters</button>
+  <button class="tab" data-tab="students">Students</button>
+</div>
+
+           <!-- EXAMS & TESTS PANEL -->
+      <div class="panel hidden" id="panel-exams">
+        <div class="panelHeader">
+          <h2>Exams & Test Papers</h2>
+          <button id="btnReloadExams" class="btn ghost" type="button">Reload</button>
+        </div>
+
+        <!-- Upload New Exam Form -->
+        <div class="card nested">
+          <h3>📄 Upload New Exam / Test Paper</h3>
+          <div class="grid3">
+            <div class="field">
+              <label>Select Course *</label>
+              <select id="examCourseSelect">
+                <option value="">Select Course...</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Select Module (Optional)</label>
+              <select id="examModuleSelect">
+                <option value="">All Modules</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Exam Type *</label>
+              <select id="examTypeSelect">
+                <option value="previous_exam">📝 Previous Exam Paper</option>
+                <option value="practice_test">✏️ Practice Test</option>
+                <option value="mock_exam">🎯 Mock Exam</option>
+                <option value="quiz">📋 Quiz</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid3">
+            <div class="field">
+              <label>Title *</label>
+              <input id="examTitle" placeholder="e.g. 2023 Final Examination" />
+            </div>
+            <div class="field">
+              <label>Description</label>
+              <input id="examDescription" placeholder="Brief description of the exam" />
+            </div>
+            <div class="field">
+              <label>Year (Optional)</label>
+              <input id="examYear" type="number" placeholder="e.g. 2023" />
+            </div>
+          </div>
+
+          <div class="grid3">
+            <div class="field">
+              <label>Term/Semester</label>
+              <select id="examTerm">
+                <option value="">Select Term</option>
+                <option value="Term 1">📘 Term 1</option>
+                <option value="Term 2">📗 Term 2</option>
+                <option value="Term 3">📙 Term 3</option>
+                <option value="Term 4">📕 Term 4</option>
+                <option value="Semester 1">🏫 Semester 1</option>
+                <option value="Semester 2">🏫 Semester 2</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Duration (minutes)</label>
+              <input id="examDuration" type="number" placeholder="e.g. 180" />
+            </div>
+            <div class="field">
+              <label>Total Marks</label>
+              <input id="examTotalMarks" type="number" placeholder="e.g. 100" />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>📎 Upload Exam File (PDF) *</label>
+              <input id="examFile" type="file" accept=".pdf" />
+            </div>
+            <div class="field">
+              <label>📎 Upload Answer Key (Optional)</label>
+              <input id="answerFile" type="file" accept=".pdf" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="btnUploadExam" class="btn primary" type="button">⬆️ Upload Exam Paper</button>
+            <div id="examsStatus" class="status"></div>
+          </div>
+        </div>
+
+        <!-- Exams List Table -->
+        <div class="tableWrap" style="margin-top: 20px;">
+          <table class="table" id="examsTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Course</th>
+                <th>Module</th>
+                <th>Type</th>
+                <th>Year/Term</th>
+                <th>Duration</th>
+                <th>Uploaded</th>
+                <th class="right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="8" style="text-align: center; color: #888;">No exams uploaded yet. Use the form above to add exam papers.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- DEBUG -->
+      <div class="debugBox">
+        <div class="debugHeader">
+          <div>Debug</div>
+          <button id="btnClearDebug" class="btn ghost" type="button">Clear</button>
+        </div>
+        <pre id="debug" class="debug"></pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- Supabase JS (CDN) -->
+ <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="admin.js"></script>
+
+  
+</body>
+</html>

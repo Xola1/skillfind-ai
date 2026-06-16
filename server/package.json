@@ -1,0 +1,22 @@
+{
+  "name": "ocr-smart-extract",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^2.8.1",
+    "@supabase/supabase-js": "^2.89.0",
+    "@vercel/analytics": "^2.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "form-data": "^4.0.0",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^5.1.6",
+    "pdfjs-dist": "^5.4.530"
+  }
+}

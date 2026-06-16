@@ -1,0 +1,2270 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Study Mode - SkillFind AI</title>
+  
+  <style>
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: radial-gradient(circle at top left, #183766 0%, #07111f 38%, #050913 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      color: #f4f7fb;
+      min-height: 100vh;
+    }
+    
+    .exam-page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      background: linear-gradient(135deg, rgba(138, 180, 255, 0.15), rgba(166, 255, 218, 0.08));
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(138, 180, 255, 0.2);
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #8ab4ff, #a6ffda);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .page-header p {
+      color: #95a3b8;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #8ab4ff, #a6ffda);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #95a3b8;
+      margin-top: 4px;
+    }
+
+    .three-column-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+
+    body:not(.study-results-active) .three-column-layout {
+      grid-template-columns: minmax(0, 760px);
+      justify-content: center;
+    }
+
+    body:not(.study-results-active) .predictions-panel,
+    body:not(.study-results-active) #statsBar,
+    body:not(.study-results-active) .scope-extra {
+      display: none !important;
+    }
+
+    body.study-results-active .three-column-layout {
+      grid-template-columns: 1fr;
+    }
+
+    body.study-results-active .selection-panel {
+      display: none !important;
+    }
+
+    .results-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .results-toolbar .panel-title {
+      margin-bottom: 0;
+    }
+
+    .change-scope-btn {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(138, 180, 255, 0.12);
+      color: #f4f7fb;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .guide-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .guide-action-btn {
+      border: 1px solid rgba(166, 255, 218, 0.28);
+      background: rgba(166, 255, 218, 0.1);
+      color: #f4f7fb;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .study-guide-content {
+      line-height: 1.7;
+    }
+
+    .study-guide-content h1,
+    .study-guide-content h2,
+    .study-guide-content h3 {
+      color: #fff;
+      margin: 18px 0 10px;
+    }
+
+    .study-guide-content ul,
+    .study-guide-content ol {
+      padding-left: 22px;
+      margin: 8px 0 14px;
+    }
+
+    .selection-panel {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #a6ffda;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modules-list {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .module-item {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .module-item:hover, .module-item.selected {
+      background: rgba(138, 180, 255, 0.12);
+      border-left: 3px solid #8ab4ff;
+    }
+
+    .module-name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .module-stats {
+      font-size: 11px;
+      color: #95a3b8;
+      margin-top: 4px;
+    }
+
+    .chapters-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+
+    .chapter-item {
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .chapter-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .chapter-item input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .select-all-btn {
+      font-size: 12px;
+      padding: 6px 12px;
+      background: rgba(138, 180, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+      color: #f4f7fb;
+    }
+
+    .predictions-panel {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .prediction-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 12px;
+    }
+
+    .prediction-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: #95a3b8;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .prediction-tab.active {
+      background: rgba(138, 180, 255, 0.15);
+      color: #8ab4ff;
+    }
+
+    .prediction-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-left: 3px solid #a6ffda;
+      transition: all 0.2s;
+    }
+
+    .prediction-card:hover {
+      transform: translateX(4px);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .prediction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .prediction-topic {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: rgba(138, 180, 255, 0.1);
+      border-radius: 12px;
+      color: #8ab4ff;
+    }
+
+    .prediction-badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+
+    .badge-high { background: #a6ffda20; color: #a6ffda; }
+    .badge-medium { background: #ffd16620; color: #ffd166; }
+    .badge-low { background: #ff7a7a20; color: #ff7a7a; }
+
+    .prediction-question {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .prediction-reason {
+      font-size: 12px;
+      color: #95a3b8;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mock-exam-paper {
+      background: #f8fafc;
+      color: #111827;
+      border-radius: 12px;
+      padding: 28px;
+      line-height: 1.55;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    }
+
+    .mock-exam-cover {
+      border: 2px solid #1f2937;
+      padding: 20px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .mock-exam-cover h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+
+    .mock-exam-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px 0;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .mock-exam-meta span {
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #fff;
+    }
+
+    .mock-student-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+      text-align: left;
+    }
+
+    .mock-student-field {
+      border-bottom: 1px solid #111827;
+      padding-bottom: 18px;
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    .mock-instructions,
+    .mock-pattern-summary,
+    .mock-answer-key {
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+
+    .mock-exam-section {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 2px solid #1f2937;
+    }
+
+    .mock-exam-section h3 {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 18px;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .mock-question {
+      margin: 16px 0;
+      break-inside: avoid;
+    }
+
+    .mock-question-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .mock-options,
+    .mock-word-bank,
+    .mock-answer-space,
+    .mock-matching-table {
+      margin-top: 8px;
+    }
+
+    .mock-options {
+      padding-left: 24px;
+    }
+
+    .mock-options li {
+      margin: 4px 0;
+    }
+
+    .mock-matching-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    .mock-matching-table th,
+    .mock-matching-table td {
+      border: 1px solid #d1d5db;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .mock-answer-space {
+      min-height: 56px;
+      border-bottom: 1px dashed #9ca3af;
+      white-space: pre-line;
+      color: #6b7280;
+    }
+
+    .mock-exam-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+
+    .mock-exam-action {
+      border: 1px solid rgba(166, 255, 218, 0.35);
+      background: rgba(166, 255, 218, 0.12);
+      color: #a6ffda;
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .studyplan-panel {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .study-day-card {
+      background: rgba(138, 180, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .study-day-number {
+      font-weight: 700;
+      color: #a6ffda;
+      margin-bottom: 8px;
+    }
+
+    .study-task {
+      font-size: 13px;
+      padding: 4px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .study-task:before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: #8ab4ff;
+    }
+
+    .exam-papers-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+
+    .exam-paper-item {
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .exam-pdf-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 3px solid #a6ffda;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .exam-pdf-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .exam-pdf-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .exam-pdf-description {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #c7d2e4;
+      margin-top: 8px;
+    }
+
+    .exam-pdf-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: #95a3b8;
+      font-size: 12px;
+    }
+
+    .exam-pdf-meta span {
+      padding: 4px 8px;
+      background: rgba(138, 180, 255, 0.1);
+      border-radius: 999px;
+    }
+
+    .exam-pdf-download {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(166, 255, 218, 0.35);
+      background: rgba(166, 255, 218, 0.12);
+      color: #a6ffda;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .exam-pdf-viewer {
+      width: 100%;
+      height: min(72vh, 760px);
+      min-height: 420px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      overflow: hidden;
+    }
+
+    .exam-pdf-viewer iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #101826;
+    }
+
+    .exam-pdf-empty,
+    .exam-pdf-error {
+      text-align: center;
+      padding: 40px 20px;
+      color: #95a3b8;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .exam-pdf-error {
+      color: #ffb4b4;
+    }
+
+    .loading-container {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(138, 180, 255, 0.2);
+      border-top-color: #8ab4ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .generate-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #8ab4ff, #a6ffda);
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0b1220;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.2s;
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(138, 180, 255, 0.3);
+    }
+
+    .generate-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .practice-games {
+      margin-top: 16px;
+      border: 1px solid rgba(138, 180, 255, 0.18);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px;
+    }
+
+    .practice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .practice-btn {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      color: #f4f7fb;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .practice-btn:hover {
+      border-color: rgba(166,255,218,0.42);
+      background: rgba(166,255,218,0.10);
+    }
+
+    .exam-date-input, .intensity-select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #f4f7fb;
+      margin: 12px 0;
+    }
+
+    @media (max-width: 1024px) {
+      .three-column-layout {
+        grid-template-columns: 1fr;
+      }
+      .selection-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .prediction-tabs,
+      .exam-pdf-header {
+        flex-direction: column;
+      }
+
+      .prediction-tab,
+      .exam-pdf-download {
+        width: 100%;
+      }
+
+      .exam-pdf-viewer {
+        height: 68vh;
+        min-height: 360px;
+      }
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px 16px;
+      color: #f4f7fb;
+      text-decoration: none;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateX(-2px);
+    }
+
+    body.embedded .back-btn {
+      display: none;
+    }
+
+    .refresh-btn {
+      background: rgba(138, 180, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: 8px;
+      color: #f4f7fb;
+    }
+
+    .topic-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .topic-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: rgba(138, 180, 255, 0.1);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #f4f7fb;
+    }
+
+    .topic-tag:hover {
+      background: rgba(138, 180, 255, 0.25);
+    }
+    @media (max-width: 640px) {
+      html,
+      body {
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      .exam-page-container {
+        padding: 12px;
+      }
+
+      .back-btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+        margin-bottom: 12px;
+      }
+
+      .page-header,
+      .selection-panel,
+      .predictions-panel,
+      .studyplan-panel,
+      .prediction-card,
+      .exam-pdf-card,
+      .stat-card {
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .page-header {
+        margin-bottom: 14px;
+      }
+
+      .page-header h1 {
+        font-size: 23px;
+        line-height: 1.15;
+      }
+
+      .page-header p,
+      .prediction-question,
+      .prediction-reason,
+      .exam-pdf-title,
+      .exam-pdf-description,
+      .module-name,
+      .module-stats {
+        overflow-wrap: anywhere;
+      }
+
+      .stats-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .stat-number {
+        font-size: 24px;
+      }
+
+      .three-column-layout {
+        gap: 14px;
+      }
+
+      .modules-list,
+      .chapters-list,
+      .exam-papers-list {
+        max-height: none;
+      }
+
+      .chapter-item {
+        align-items: flex-start;
+      }
+
+      .chapter-item input {
+        flex: 0 0 18px;
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+      }
+
+      .panel-title {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .refresh-btn {
+        min-height: 36px;
+        margin-left: 0;
+      }
+
+      .prediction-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .prediction-tab,
+      .select-all-btn,
+      .generate-btn,
+      .mock-exam-action,
+      .exam-date-input,
+      .intensity-select {
+        min-height: 44px;
+      }
+
+      .prediction-header,
+      .mock-question-heading,
+      .mock-exam-section h3,
+      .exam-pdf-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .prediction-topic,
+      .prediction-badge,
+      .topic-tag {
+        width: fit-content;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .mock-exam-actions {
+        justify-content: stretch;
+      }
+
+      .mock-exam-action {
+        width: 100%;
+      }
+
+      .mock-exam-paper {
+        border-radius: 10px;
+        padding: 14px;
+        overflow-x: auto;
+      }
+
+      .mock-exam-cover {
+        padding: 14px;
+      }
+
+      .mock-exam-cover h2 {
+        font-size: 20px;
+      }
+
+      .mock-matching-table {
+        min-width: 520px;
+      }
+
+      .exam-pdf-viewer {
+        height: 62vh;
+        min-height: 320px;
+      }
+
+      .loading-container,
+      .exam-pdf-empty,
+      .exam-pdf-error {
+        padding: 24px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    if (new URLSearchParams(window.location.search).get("embedded") === "1") {
+      document.body.classList.add("embedded");
+    }
+  </script>
+  <div class="exam-page-container">
+    <a href="index.html?openChat=1" class="back-btn">← Back to Learning</a>
+    
+    <div class="page-header">
+      <h1>📚 Exam Study Mode</h1>
+      <p>AI-powered exam preparation based on your course content, past exams, and test papers</p>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-card">
+        <div class="stat-number" id="totalExamQuestions">0</div>
+        <div class="stat-label">Past Exam Questions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalChapters">0</div>
+        <div class="stat-label">Chapters Available</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalExams">0</div>
+        <div class="stat-label">Exam Papers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="predictionCount">0</div>
+        <div class="stat-label">AI Predictions</div>
+      </div>
+    </div>
+
+    <div class="three-column-layout">
+      
+      <div class="selection-panel">
+        <div class="panel-title">📖 1. Select Module</div>
+        <div class="modules-list" id="modulesList">
+          <div class="loading-container"><div class="spinner"></div><p>Loading modules...</p></div>
+        </div>
+
+        <div class="panel-title" style="margin-top: 20px;">
+          📑 2. Select Chapters
+          <button class="refresh-btn" id="refreshChaptersBtn">⟳</button>
+        </div>
+        <div class="chapters-list" id="chaptersList">
+          <div style="text-align: center; padding: 20px; color: #95a3b8;">Select a module first</div>
+        </div>
+        <button class="select-all-btn" id="selectAllBtn">✓ Select All Chapters</button>
+
+        <div class="panel-title scope-extra" id="pastPapersTitle" style="margin-top: 20px;">📋 3. Past Exam Papers</div>
+        <div class="exam-papers-list scope-extra" id="examPapersList">
+          <div id="paperListEmpty" style="text-align: center; padding: 10px; color: #95a3b8;">Select a module to see past exams</div>
+        </div>
+
+        <button class="generate-btn" id="generatePlanBtn">
+          Generate Exam Study Guide
+        </button>
+
+        <div class="practice-games scope-extra">
+          <div class="panel-title" style="margin:0;">🎮 Practice Games</div>
+          <div class="practice-grid">
+            <button class="practice-btn" data-practice-page="quiz.html" type="button">Quiz</button>
+            <button class="practice-btn" data-practice-page="flashcard.html" type="button">Flashcards</button>
+            <button class="practice-btn" data-practice-page="word-builder.html" type="button">Word Builder</button>
+            <button class="practice-btn" data-practice-page="invader-challenge.html" type="button">Invader</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="predictions-panel">
+        <div class="results-toolbar">
+          <button class="change-scope-btn" id="backToScopeBtn" type="button">← Change scope</button>
+          <div class="panel-title">
+            <span id="aiPanelTitleText">🔮 AI Predicted Mock Exam Paper</span>
+            <button class="refresh-btn" id="refreshPredictionsBtn">⟳</button>
+          </div>
+        </div>
+        
+        <div class="prediction-tabs">
+          <button class="prediction-tab active" id="aiTabBtn" data-tab="guide">Study Guide</button>
+          <button class="prediction-tab" id="mockTabBtn" data-tab="mock">Generate Mock Exam</button>
+          <button class="prediction-tab" id="pastTabBtn" data-tab="past">📜 Past Exam Questions</button>
+          <button class="prediction-tab" data-tab="topics">🏷️ Topic Analysis</button>
+          <button class="prediction-tab" data-tab="practice">Practice Games</button>
+        </div>
+        
+        <div id="predictionsList">
+          <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Select a module and generate predictions</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
+  <script>
+    // ============================================
+    // EXAM STUDY PAGE - USING IIFE TO AVOID GLOBAL CONFLICTS
+    // ============================================
+    
+    (function() {
+      const pagePath = window.location.pathname.toLowerCase();
+      const isTestStudyPage = pagePath.includes('test-study') || pagePath.includes('test_study');
+      const studyModeConfig = {
+        mode: isTestStudyPage ? 'test' : 'exam',
+        sourceExamType: isTestStudyPage ? 'practice_test' : 'previous_exam',
+        predictEndpoint: isTestStudyPage ? '/student/api/test/predict-questions' : '/student/api/exam/predict-questions',
+        guideEndpoint: isTestStudyPage ? '/student/api/test/study-guide' : '/student/api/exam/study-guide',
+        pageTitle: isTestStudyPage ? 'Test Study Mode' : 'Exam Study Mode',
+        pageDescription: isTestStudyPage
+          ? 'AI-powered test preparation based on your course content and uploaded past tests'
+          : 'AI-powered exam preparation based on your course content and uploaded past exams',
+        questionStatLabel: isTestStudyPage ? 'Past Test Questions' : 'Past Exam Questions',
+        paperStatLabel: isTestStudyPage ? 'Test Papers' : 'Exam Papers',
+        pastPapersTitle: isTestStudyPage ? '📋 3. Past Test Papers' : '📋 3. Past Exam Papers',
+        paperListEmpty: isTestStudyPage ? 'Select a module to see past tests' : 'Select a module to see past exams',
+        aiTitle: isTestStudyPage ? 'Generated Test Study Guide' : 'Generated Exam Study Guide',
+        aiTab: isTestStudyPage ? 'Study Guide' : 'Study Guide',
+        mockTab: isTestStudyPage ? 'Generate Mock Test' : 'Generate Mock Exam',
+        pastTab: isTestStudyPage ? '📜 Past Test Questions' : '📜 Past Exam Questions',
+        generateButton: isTestStudyPage ? 'Generate Test Study Guide' : 'Generate Exam Study Guide',
+        generatingText: isTestStudyPage ? 'Generating test study guide...' : 'Generating exam study guide...',
+        loadingText: isTestStudyPage
+          ? 'AI is analyzing complete past-test structure and generating a mock test...'
+          : 'AI is analyzing complete past-paper structure and generating a mock exam...',
+        noPapersText: isTestStudyPage ? 'No past test papers uploaded' : 'No past exam papers uploaded',
+        pdfEmptyText: isTestStudyPage ? 'No past test papers are available for this module yet.' : 'No past exam papers are available for this module yet.',
+        pdfSelectText: isTestStudyPage ? 'Select a module to view past test papers.' : 'Select a module to view past exam papers.'
+      };
+
+      // Use a unique variable name to avoid conflicts
+      const ExamStudyApp = {
+        supabase: null,
+        API_BASE: "http://localhost:5050",
+        studyMode: studyModeConfig,
+        studyState: {
+          modules: [],
+          selectedModuleId: null,
+          selectedModuleName: null,
+          selectedModuleCourseId: null,
+          chapters: [],
+          selectedChapters: [],
+          examPapers: [],
+          examQuestions: [],
+          predictions: [],
+          studyGuide: '',
+          generatedExamPaper: null,
+          patternAnalysis: null,
+          examDate: null,
+          intensity: 'moderate',
+          isGenerating: false,
+          isLoadingExamPapers: false,
+          currentTab: 'ai'
+        }
+      };
+
+      // Initialize Supabase
+      function initSupabase() {
+        try {
+          if (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL && window.APP_CONFIG.SUPABASE_ANON_KEY) {
+            ExamStudyApp.supabase = window.supabase.createClient(
+              window.APP_CONFIG.SUPABASE_URL,
+              window.APP_CONFIG.SUPABASE_ANON_KEY,
+              {
+                auth: { 
+                  persistSession: true, 
+                  autoRefreshToken: true, 
+                  detectSessionInUrl: true 
+                }
+              }
+            );
+            console.log('Supabase initialized successfully');
+            return true;
+          } else {
+            console.error('APP_CONFIG not found or missing credentials');
+            return false;
+          }
+        } catch (error) {
+          console.error('Failed to initialize Supabase:', error);
+          return false;
+        }
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          return m;
+        });
+      }
+
+      function escapeAttr(str) {
+        return escapeHtml(String(str || '')).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function removeFieldWithLabel(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+        const label = field.previousElementSibling;
+        field.remove();
+        if (label?.classList.contains('panel-title')) label.remove();
+      }
+
+      function setMockExamUi() {
+        document.querySelector('.studyplan-panel')?.remove();
+        removeFieldWithLabel('examDate');
+        removeFieldWithLabel('intensity');
+        const generateBtn = document.getElementById('generatePlanBtn');
+        if (generateBtn && !ExamStudyApp.studyState.isGenerating) {
+          generateBtn.textContent = ExamStudyApp.studyMode.generateButton;
+        }
+      }
+
+      function showScopeScreen() {
+        document.body.classList.remove('study-results-active');
+      }
+
+      function showResultsScreen() {
+        document.body.classList.add('study-results-active');
+      }
+
+      function applyStudyModeUi() {
+        const mode = ExamStudyApp.studyMode;
+        document.title = `${mode.pageTitle} - SkillFind AI`;
+
+        const heading = document.querySelector('.page-header h1');
+        if (heading) heading.textContent = `📚 ${mode.pageTitle}`;
+
+        const description = document.querySelector('.page-header p');
+        if (description) description.textContent = mode.pageDescription;
+
+        const statLabels = document.querySelectorAll('.stat-label');
+        if (statLabels[0]) statLabels[0].textContent = mode.questionStatLabel;
+        if (statLabels[2]) statLabels[2].textContent = mode.paperStatLabel;
+
+        const pastPapersTitle = document.getElementById('pastPapersTitle');
+        if (pastPapersTitle) pastPapersTitle.textContent = mode.pastPapersTitle;
+
+        const paperListEmpty = document.getElementById('paperListEmpty');
+        if (paperListEmpty) paperListEmpty.textContent = mode.paperListEmpty;
+
+        const aiPanelTitle = document.getElementById('aiPanelTitleText');
+        if (aiPanelTitle) aiPanelTitle.textContent = mode.aiTitle;
+
+        const aiTab = document.getElementById('aiTabBtn');
+        if (aiTab) aiTab.textContent = mode.aiTab;
+
+        const mockTab = document.getElementById('mockTabBtn');
+        if (mockTab) mockTab.textContent = mode.mockTab;
+
+        const pastTab = document.getElementById('pastTabBtn');
+        if (pastTab) pastTab.textContent = mode.pastTab;
+
+        setMockExamUi();
+      }
+
+      function isValidUuid(value) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+      }
+
+      function getChapterId(chapter) {
+        return String(chapter?.id || chapter?.chapter_id || '').trim();
+      }
+
+      function getValidSelectedChapterIds() {
+        return ExamStudyApp.studyState.selectedChapters.filter(isValidUuid);
+      }
+
+      function openPracticeTool(page) {
+        const studyState = ExamStudyApp.studyState;
+        const chapterIds = getValidSelectedChapterIds();
+
+        if (!studyState.selectedModuleId || !chapterIds.length) {
+          alert('Select a module and at least one chapter first.');
+          return;
+        }
+
+        const firstChapter = studyState.chapters.find(chapter => getChapterId(chapter) === chapterIds[0]) || {};
+        const context = {
+          moduleId: studyState.selectedModuleId,
+          moduleName: studyState.selectedModuleName || 'Selected Module',
+          chapterId: chapterIds[0],
+          chapterIds: chapterIds.join(','),
+          chapterTitle: firstChapter.chapter_title || `${chapterIds.length} selected chapters`,
+          chapterNumber: firstChapter.chapter_number || '',
+          source: 'exam-practice'
+        };
+
+        try { localStorage.setItem('skillfind:selectedContext', JSON.stringify(context)); } catch {}
+        window.location.href = `${page}?${new URLSearchParams(context).toString()}`;
+      }
+
+      function buildExamFileName(exam) {
+        const title = exam?.title || 'exam-paper';
+        const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'exam-paper';
+        const year = exam?.year ? `-${exam.year}` : '';
+        return `${cleanTitle}${year}.pdf`;
+      }
+
+      function parseSupabaseStoragePath(fileUrl) {
+        if (!fileUrl) return null;
+
+        const defaultBucket = 'exams';
+        const cleanUrl = String(fileUrl).trim();
+
+        try {
+          const url = new URL(cleanUrl);
+          const marker = '/storage/v1/object/';
+          const markerIndex = url.pathname.indexOf(marker);
+          if (markerIndex !== -1) {
+            const objectPath = url.pathname.slice(markerIndex + marker.length);
+            const parts = objectPath.split('/').filter(Boolean);
+            if (parts[0] === 'public' || parts[0] === 'sign') parts.shift();
+            const bucket = parts.shift() || defaultBucket;
+            const path = decodeURIComponent(parts.join('/'));
+            return path ? { bucket, path } : null;
+          }
+          return null;
+        } catch (error) {
+          const normalized = cleanUrl.replace(/^\/+/, '');
+          const parts = normalized.split('/').filter(Boolean);
+          if (parts.length > 1 && (parts[0] === defaultBucket || parts[0] === 'exam-papers')) {
+            return { bucket: parts.shift(), path: parts.join('/') };
+          }
+          return { bucket: defaultBucket, path: normalized };
+        }
+      }
+
+      async function resolveExamFileUrl(exam, options = {}) {
+        if (!exam?.file_url) return '';
+        if (!options.download && exam._resolvedFileUrl) return exam._resolvedFileUrl;
+
+        const rawUrl = String(exam.file_url).trim();
+        if (/^https?:\/\//i.test(rawUrl) && !options.forceSignedUrl) {
+          if (!options.download) exam._resolvedFileUrl = rawUrl;
+          return rawUrl;
+        }
+
+        const storagePath = parseSupabaseStoragePath(rawUrl);
+        if (!storagePath || !ExamStudyApp.supabase) return rawUrl;
+
+        const signedOptions = options.download ? { download: buildExamFileName(exam) } : undefined;
+        const { data, error } = await ExamStudyApp.supabase.storage
+          .from(storagePath.bucket)
+          .createSignedUrl(storagePath.path, 60 * 60, signedOptions);
+
+        if (error) throw error;
+        const signedUrl = data?.signedUrl || rawUrl;
+        if (!options.download) exam._resolvedFileUrl = signedUrl;
+        return signedUrl;
+      }
+
+      async function getToken() {
+        try {
+          if (!ExamStudyApp.supabase) return localStorage.getItem('supabase_token');
+          const { data } = await ExamStudyApp.supabase.auth.getSession();
+          return data?.session?.access_token || localStorage.getItem('supabase_token');
+        } catch (e) {
+          return localStorage.getItem('supabase_token');
+        }
+      }
+
+      async function apiFetch(url, opts = {}) {
+        const token = await getToken();
+        const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(url, { ...opts, headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      }
+
+      async function checkAuth() {
+        try {
+          if (!ExamStudyApp.supabase) {
+            console.error('Supabase not initialized');
+            window.location.href = 'login.html';
+            return false;
+          }
+          const { data } = await ExamStudyApp.supabase.auth.getSession();
+          if (!data?.session) {
+            window.location.href = 'login.html';
+            return false;
+          }
+          localStorage.setItem('supabase_token', data.session.access_token);
+          return true;
+        } catch (err) {
+          console.error('Auth check failed:', err);
+          window.location.href = 'login.html';
+          return false;
+        }
+      }
+
+      async function loadModules() {
+        const modulesList = document.getElementById('modulesList');
+        modulesList.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Loading modules...</p></div>';
+        
+        try {
+          const data = await apiFetch(`${ExamStudyApp.API_BASE}/student/modules`);
+          ExamStudyApp.studyState.modules = data.modules || [];
+          
+          if (ExamStudyApp.studyState.modules.length === 0) {
+            modulesList.innerHTML = '<div style="text-align: center; padding: 20px;">No modules found</div>';
+            return;
+          }
+          
+          modulesList.innerHTML = '';
+          ExamStudyApp.studyState.modules.forEach(module => {
+            const div = document.createElement('div');
+            div.className = 'module-item';
+            div.dataset.moduleId = module.module_id;
+            const paperCountLabel = ExamStudyApp.studyMode.mode === 'test' ? 'tests' : 'exams';
+            div.innerHTML = `
+              <div class="module-name">${escapeHtml(module.name)}</div>
+              <div class="module-stats">📚 ${module.exam_count || 0} ${paperCountLabel} • 📝 ${module.question_count || 0} questions</div>
+              <div style="font-size: 11px; color: #888;">${escapeHtml(module.course_name || 'Course')}</div>
+            `;
+            div.addEventListener('click', () => selectModule(module.module_id, module.name, module.course_id));
+            modulesList.appendChild(div);
+          });
+          
+        } catch (error) {
+          console.error('Failed to load modules:', error);
+          modulesList.innerHTML = '<div style="text-align: center; padding: 20px;">Failed to load modules</div>';
+        }
+      }
+
+      async function selectModule(moduleId, moduleName, courseId) {
+        if (!isValidUuid(moduleId)) {
+          console.error('Invalid module id:', moduleId);
+          alert('This module has an invalid ID. Please refresh and select the module again.');
+          return;
+        }
+
+        document.querySelectorAll('.module-item').forEach(item => {
+          item.classList.remove('selected');
+          if (item.dataset.moduleId === moduleId) item.classList.add('selected');
+        });
+        
+        ExamStudyApp.studyState.selectedModuleId = String(moduleId).trim();
+        ExamStudyApp.studyState.selectedModuleName = moduleName;
+        ExamStudyApp.studyState.selectedModuleCourseId = courseId;
+        ExamStudyApp.studyState.selectedChapters = [];
+        
+        await Promise.all([
+          loadChapters(moduleId),
+          loadExamPapers(moduleId, courseId),
+          loadExamQuestions(moduleId, courseId)
+        ]);
+      }
+
+      async function loadChapters(moduleId) {
+        const chaptersList = document.getElementById('chaptersList');
+        chaptersList.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Loading chapters...</p></div>';
+        
+        try {
+          const data = await apiFetch(`${ExamStudyApp.API_BASE}/student/chapters?moduleId=${moduleId}`);
+          ExamStudyApp.studyState.chapters = data.chapters || [];
+          
+          document.getElementById('totalChapters').textContent = ExamStudyApp.studyState.chapters.length;
+          
+          if (ExamStudyApp.studyState.chapters.length === 0) {
+            chaptersList.innerHTML = '<div style="text-align: center; padding: 20px;">No chapters available</div>';
+            return;
+          }
+          
+          ExamStudyApp.studyState.selectedChapters = ExamStudyApp.studyState.chapters.map(getChapterId).filter(Boolean);
+          
+          chaptersList.innerHTML = '';
+          ExamStudyApp.studyState.chapters.forEach(chapter => {
+            const chapterId = getChapterId(chapter);
+            const div = document.createElement('div');
+            div.className = 'chapter-item';
+            div.innerHTML = `
+              <input type="checkbox" class="chapter-checkbox" value="${escapeAttr(chapterId)}" ${chapterId ? 'checked' : 'disabled'}>
+              <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 500;">${escapeHtml(chapter.chapter_title || 'Chapter ' + chapter.chapter_number)}</div>
+                <div style="font-size: 11px; color: #888;">Chapter ${chapter.chapter_number || '?'}</div>
+              </div>
+            `;
+            const checkbox = div.querySelector('.chapter-checkbox');
+            checkbox.addEventListener('change', () => {
+              if (checkbox.checked) {
+                if (chapterId && !ExamStudyApp.studyState.selectedChapters.includes(chapterId)) {
+                  ExamStudyApp.studyState.selectedChapters.push(chapterId);
+                }
+              } else {
+                ExamStudyApp.studyState.selectedChapters = ExamStudyApp.studyState.selectedChapters.filter(id => id !== chapterId);
+              }
+            });
+            chaptersList.appendChild(div);
+          });
+          
+        } catch (error) {
+          console.error('Failed to load chapters:', error);
+          chaptersList.innerHTML = '<div style="text-align: center; padding: 20px;">Failed to load chapters</div>';
+        }
+      }
+
+      async function loadExamPapers(moduleId, courseId) {
+        const examPapersList = document.getElementById('examPapersList');
+        examPapersList.innerHTML = '<div class="loading-container"><div class="spinner" style="width: 20px; height: 20px;"></div><p>Loading papers...</p></div>';
+        ExamStudyApp.studyState.isLoadingExamPapers = true;
+        if (ExamStudyApp.studyState.currentTab === 'past') {
+          renderPastExamPapers();
+        }
+        
+        try {
+          if (!ExamStudyApp.supabase) throw new Error('Supabase not initialized');
+          
+          let query = ExamStudyApp.supabase.from('exams').select('*');
+          query = query.eq('exam_type', ExamStudyApp.studyMode.sourceExamType);
+          if (moduleId) query = query.eq('module_id', moduleId);
+          else if (courseId) query = query.eq('course_id', courseId);
+          
+          const { data: exams, error } = await query.order('year', { ascending: false });
+          
+          if (error) throw error;
+          
+          ExamStudyApp.studyState.examPapers = exams || [];
+          document.getElementById('totalExams').textContent = ExamStudyApp.studyState.examPapers.length;
+          ExamStudyApp.studyState.isLoadingExamPapers = false;
+          if (ExamStudyApp.studyState.currentTab === 'past') {
+            renderPastExamPapers();
+          }
+          
+          if (ExamStudyApp.studyState.examPapers.length === 0) {
+            examPapersList.innerHTML = `<div style="text-align: center; padding: 10px; color: #95a3b8;">${escapeHtml(ExamStudyApp.studyMode.noPapersText)}</div>`;
+            return;
+          }
+          
+          examPapersList.innerHTML = '';
+          ExamStudyApp.studyState.examPapers.forEach(exam => {
+            const div = document.createElement('div');
+            div.className = 'exam-paper-item';
+            div.innerHTML = `
+              <div style="font-weight: 500;">📄 ${escapeHtml(exam.title)}</div>
+              <div style="font-size: 10px; color: #888;">${exam.year || 'N/A'} • ${exam.exam_type || 'exam'} • ${exam.total_marks || '?'} marks</div>
+            `;
+            examPapersList.appendChild(div);
+          });
+          
+        } catch (error) {
+          console.error('Failed to load exam papers:', error);
+          examPapersList.innerHTML = '<div style="text-align: center; padding: 10px; color: #95a3b8;">Failed to load papers</div>';
+          if (ExamStudyApp.studyState.currentTab === 'past') {
+            document.getElementById('predictionsList').innerHTML = '<div class="exam-pdf-error">Failed to load past papers. Please try again.</div>';
+          }
+        } finally {
+          ExamStudyApp.studyState.isLoadingExamPapers = false;
+        }
+      }
+
+      async function loadExamQuestions(moduleId, courseId) {
+        try {
+          if (!ExamStudyApp.supabase) throw new Error('Supabase not initialized');
+
+          let sourceExamQuery = ExamStudyApp.supabase
+            .from('exams')
+            .select('id')
+            .eq('exam_type', ExamStudyApp.studyMode.sourceExamType);
+
+          if (moduleId) sourceExamQuery = sourceExamQuery.eq('module_id', moduleId);
+          else if (courseId) sourceExamQuery = sourceExamQuery.eq('course_id', courseId);
+
+          const { data: sourceExams, error: sourceExamError } = await sourceExamQuery;
+          if (sourceExamError) throw sourceExamError;
+
+          const sourceExamIds = (sourceExams || []).map(exam => exam.id).filter(Boolean);
+          if (sourceExamIds.length === 0) {
+            ExamStudyApp.studyState.examQuestions = [];
+            document.getElementById('totalExamQuestions').textContent = '0';
+            return;
+          }
+          
+          let query = ExamStudyApp.supabase.from('exam_question_bank').select('*').in('exam_id', sourceExamIds);
+          
+          const { data: questions, error } = await query.limit(500);
+          
+          if (error) throw error;
+          
+          ExamStudyApp.studyState.examQuestions = questions || [];
+          document.getElementById('totalExamQuestions').textContent = ExamStudyApp.studyState.examQuestions.length;
+          
+        } catch (error) {
+          console.error('Failed to load exam questions:', error);
+        }
+      }
+
+      function generateLocalPredictions() {
+        const predictions = [];
+        const topics = ExamStudyApp.studyState.chapters
+          .filter(c => ExamStudyApp.studyState.selectedChapters.includes(c.id))
+          .map(c => c.chapter_title || `Chapter ${c.chapter_number}`);
+        
+        const templates = [
+          { text: "Explain the key concepts of {topic} and provide relevant examples.", difficulty: "medium", type: "essay" },
+          { text: "What are the main principles covered in {topic}?", difficulty: "easy", type: "short_answer" },
+          { text: "Analyze and evaluate the importance of {topic} in real-world applications.", difficulty: "hard", type: "essay" },
+          { text: "Compare and contrast different approaches related to {topic}.", difficulty: "medium", type: "essay" },
+          { text: "List and describe the key terms associated with {topic}.", difficulty: "easy", type: "short_answer" }
+        ];
+        
+        for (let i = 0; i < Math.min(10, topics.length * 2); i++) {
+          const topic = topics[i % topics.length];
+          const template = templates[i % templates.length];
+            predictions.push({
+              question_text: template.text.replace("{topic}", topic),
+              question_type: template.type,
+              difficulty: template.difficulty,
+              topic_tags: [topic],
+              prediction_reason: `Based on analysis of past ${ExamStudyApp.studyMode.mode} patterns and chapter importance.`
+            });
+          }
+        
+        return predictions;
+      }
+
+      function markdownToHtml(markdown) {
+        if (window.marked && window.DOMPurify) {
+          return DOMPurify.sanitize(marked.parse(markdown || ''));
+        }
+        return `<pre>${escapeHtml(markdown || '')}</pre>`;
+      }
+
+      function renderStudyGuide() {
+        const container = document.getElementById('predictionsList');
+        if (!ExamStudyApp.studyState.studyGuide) {
+          container.innerHTML = '<div style="text-align: center; padding: 40px;">Generate a study guide first.</div>';
+          return;
+        }
+        container.innerHTML = `<div class="study-guide-content">${markdownToHtml(ExamStudyApp.studyState.studyGuide)}</div>`;
+      }
+
+      function renderMockPaperLauncher() {
+        const container = document.getElementById('predictionsList');
+        if (ExamStudyApp.studyState.generatedExamPaper) {
+          renderCompleteExamPaper(ExamStudyApp.studyState.generatedExamPaper, ExamStudyApp.studyState.patternAnalysis);
+          return;
+        }
+        const label = ExamStudyApp.studyMode.mode === 'test' ? 'Generate Mock Test Paper' : 'Generate Mock Exam Paper';
+        container.innerHTML = `
+          <div class="guide-actions">
+            <button class="guide-action-btn" id="generateMockPaperBtn" type="button">${escapeHtml(label)}</button>
+          </div>
+          <div class="study-guide-content">
+            <h2>Mock Paper</h2>
+            <p>Generate this after reviewing the study guide. The AI will use saved study questions, predicted questions, past-paper patterns, and selected chapter scope.</p>
+          </div>
+        `;
+        document.getElementById('generateMockPaperBtn')?.addEventListener('click', generateMockPaper);
+      }
+
+      function renderPracticeGamesPanel() {
+        const container = document.getElementById('predictionsList');
+        container.innerHTML = `
+          <div class="practice-games" style="display:block;">
+            <div class="panel-title" style="margin-bottom:12px;">Practice Games</div>
+            <div class="practice-grid">
+              <button class="practice-btn" data-practice-page="quiz.html" type="button">Quiz</button>
+              <button class="practice-btn" data-practice-page="flashcard.html" type="button">Flashcards</button>
+              <button class="practice-btn" data-practice-page="word-builder.html" type="button">Word Builder</button>
+              <button class="practice-btn" data-practice-page="invader-challenge.html" type="button">Invader</button>
+            </div>
+          </div>
+        `;
+        container.querySelectorAll('.practice-btn').forEach(button => {
+          button.addEventListener('click', () => openPracticeTool(button.dataset.practicePage));
+        });
+      }
+
+      async function renderPastExamPapers() {
+        const container = document.getElementById('predictionsList');
+
+        if (!ExamStudyApp.studyState.selectedModuleId) {
+          container.innerHTML = `<div class="exam-pdf-empty">${escapeHtml(ExamStudyApp.studyMode.pdfSelectText)}</div>`;
+          return;
+        }
+
+        if (ExamStudyApp.studyState.isLoadingExamPapers) {
+          const loadingLabel = ExamStudyApp.studyMode.mode === 'test' ? 'Loading past test papers...' : 'Loading past exam papers...';
+          container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>${escapeHtml(loadingLabel)}</p></div>`;
+          return;
+        }
+
+        const examPapers = ExamStudyApp.studyState.examPapers || [];
+        const renderModuleId = ExamStudyApp.studyState.selectedModuleId;
+        if (examPapers.length === 0) {
+          container.innerHTML = `<div class="exam-pdf-empty">${escapeHtml(ExamStudyApp.studyMode.pdfEmptyText)}</div>`;
+          return;
+        }
+
+        const paperLabel = ExamStudyApp.studyMode.mode === 'test' ? 'past test paper' : 'past exam paper';
+        container.innerHTML = `
+          <div class="study-guide-content">
+            <h2>Select a ${escapeHtml(paperLabel)}</h2>
+            <p>Choose one paper to preview or download.</p>
+          </div>
+          <div class="exam-papers-list" style="max-height:none;">
+            ${examPapers.map(exam => {
+              const title = exam.title || (ExamStudyApp.studyMode.mode === 'test' ? 'Past Test Paper' : 'Past Exam Paper');
+              const meta = [
+                exam.year ? `Year: ${escapeHtml(String(exam.year))}` : null,
+                exam.term ? `Term: ${escapeHtml(String(exam.term))}` : null,
+                exam.duration_minutes ? `${escapeHtml(String(exam.duration_minutes))} min` : null,
+                exam.total_marks ? `${escapeHtml(String(exam.total_marks))} marks` : null
+              ].filter(Boolean).join(' • ');
+              return `
+                <button class="module-item past-paper-select" type="button" data-exam-id="${escapeAttr(exam.id)}">
+                  <div class="module-name">${escapeHtml(title)}</div>
+                  <div class="module-stats">${meta || 'Past paper'}</div>
+                  ${exam.description ? `<div style="font-size:11px;color:#95a3b8;margin-top:4px;">${escapeHtml(exam.description)}</div>` : ''}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+        container.querySelectorAll('.past-paper-select').forEach(button => {
+          button.addEventListener('click', () => {
+            const exam = examPapers.find(item => String(item.id) === button.dataset.examId);
+            if (exam && ExamStudyApp.studyState.currentTab === 'past' && ExamStudyApp.studyState.selectedModuleId === renderModuleId) {
+              renderSelectedPastPaper(exam);
+            }
+          });
+        });
+      }
+
+      async function renderSelectedPastPaper(exam) {
+        const container = document.getElementById('predictionsList');
+        const title = exam.title || (ExamStudyApp.studyMode.mode === 'test' ? 'Past Test Paper' : 'Past Exam Paper');
+        const meta = [
+          exam.year ? `Year: ${escapeHtml(String(exam.year))}` : null,
+          exam.term ? `Term: ${escapeHtml(String(exam.term))}` : null,
+          exam.duration_minutes ? `${escapeHtml(String(exam.duration_minutes))} min` : null,
+          exam.total_marks ? `${escapeHtml(String(exam.total_marks))} marks` : null
+        ].filter(Boolean);
+
+        container.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Opening selected paper...</p></div>';
+        try {
+          const pdfUrl = await resolveExamFileUrl(exam);
+          const downloadUrl = await resolveExamFileUrl(exam, { download: true });
+          container.innerHTML = `
+            <div class="exam-pdf-card">
+              <div class="exam-pdf-header">
+                <div>
+                  <button class="change-scope-btn" id="backToPaperListBtn" type="button">Back to paper list</button>
+                  <div class="exam-pdf-title" style="margin-top:10px;">${escapeHtml(title)}</div>
+                  <div class="exam-pdf-meta">${meta.map(item => `<span>${item}</span>`).join('')}</div>
+                  ${exam.description ? `<div class="exam-pdf-description">${escapeHtml(exam.description)}</div>` : ''}
+                </div>
+                ${pdfUrl ? `<a class="exam-pdf-download" href="${escapeAttr(downloadUrl)}" download="${escapeAttr(buildExamFileName(exam))}" target="_blank" rel="noopener">Download PDF</a>` : ''}
+              </div>
+              ${pdfUrl ? `<div class="exam-pdf-viewer"><iframe src="${escapeAttr(pdfUrl)}#toolbar=1&navpanes=0" title="${escapeAttr(title)} PDF preview" loading="lazy"></iframe></div>` : '<div class="exam-pdf-error">This paper does not have a PDF file attached.</div>'}
+            </div>
+          `;
+          document.getElementById('backToPaperListBtn')?.addEventListener('click', renderPastExamPapers);
+        } catch (error) {
+          console.error('Failed to render selected exam PDF:', error);
+          container.innerHTML = '<div class="exam-pdf-error">Unable to open this paper. Check the file URL or Supabase storage permissions.</div>';
+        }
+      }
+
+      function renderPredictions(aiPredictions, pastQuestions) {
+        const container = document.getElementById('predictionsList');
+        const activeTab = ExamStudyApp.studyState.currentTab;
+        
+        if (activeTab === 'guide') {
+          renderStudyGuide();
+          return;
+        }
+
+        if (activeTab === 'mock') {
+          renderMockPaperLauncher();
+          return;
+        }
+
+        if (activeTab === 'ai') {
+          if (!aiPredictions || aiPredictions.length === 0) {
+            const paperName = ExamStudyApp.studyMode.mode === 'test' ? 'mock test paper' : 'mock exam paper';
+            container.innerHTML = `<div style="text-align: center; padding: 40px;">No ${paperName} available. Generate one first.</div>`;
+            return;
+          }
+          
+          let html = '';
+          aiPredictions.forEach((pred, idx) => {
+            let confidenceClass = 'badge-medium';
+            const reason = pred.prediction_reason || '';
+            if (reason.toLowerCase().includes('frequent') || reason.toLowerCase().includes('always')) confidenceClass = 'badge-high';
+            else if (reason.toLowerCase().includes('low') || reason.toLowerCase().includes('rare')) confidenceClass = 'badge-low';
+            
+            html += `
+              <div class="prediction-card">
+                <div class="prediction-header">
+                  <div class="prediction-topic">${(pred.topic_tags || ['General']).map(t => `#${escapeHtml(t)}`).join(' • ')}</div>
+                  <div class="prediction-badge ${confidenceClass}">${pred.difficulty || 'medium'}</div>
+                </div>
+                <div class="prediction-question">${escapeHtml(pred.question_text)}</div>
+                <div class="prediction-reason">💡 ${escapeHtml(pred.prediction_reason || `Based on past ${ExamStudyApp.studyMode.mode} patterns and chapter content`)}</div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+          
+        } else if (activeTab === 'past') {
+          renderPastExamPapers();
+          return;
+
+          if (!pastQuestions || pastQuestions.length === 0) {
+            const questionLabel = ExamStudyApp.studyMode.mode === 'test' ? 'No past test questions available for this module.' : 'No past exam questions available for this module.';
+            container.innerHTML = `<div style="text-align: center; padding: 40px;">${escapeHtml(questionLabel)}</div>`;
+            return;
+          }
+          
+          let html = '';
+          pastQuestions.forEach((q, idx) => {
+            html += `
+              <div class="prediction-card">
+                <div class="prediction-header">
+                  <div class="prediction-topic">${(q.topic_tags || ['General']).map(t => `#${escapeHtml(t)}`).join(' • ')}</div>
+                  <div class="prediction-badge badge-medium">${q.difficulty_level || 'medium'} • ${q.question_type || 'short_answer'}</div>
+                </div>
+                <div class="prediction-question">${escapeHtml(q.question_text)}</div>
+                <div class="prediction-reason">📜 From past ${ExamStudyApp.studyMode.mode} paper</div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+          
+        } else if (activeTab === 'topics') {
+          renderTopicAnalysis();
+        } else if (activeTab === 'practice') {
+          renderPracticeGamesPanel();
+        }
+      }
+
+      function collectTopicAnalysisQuestions() {
+        const paperQuestions = flattenExamPaperForDisplay(ExamStudyApp.studyState.generatedExamPaper);
+        return [
+          ...(ExamStudyApp.studyState.predictions || []),
+          ...(ExamStudyApp.studyState.examQuestions || []),
+          ...paperQuestions
+        ].filter(question => question && (question.question_text || question.text || question.topic_tags?.length));
+      }
+
+      function incrementCount(map, key, weight = 1) {
+        const cleanKey = String(key || '').trim();
+        if (!cleanKey) return;
+        map[cleanKey] = (map[cleanKey] || 0) + weight;
+      }
+
+      function renderTopicAnalysis() {
+        const container = document.getElementById('predictionsList');
+        const analysis = ExamStudyApp.studyState.patternAnalysis || {};
+        const questions = collectTopicAnalysisQuestions();
+        const topicFrequency = {};
+        const typeCount = {};
+        const difficultyCount = {};
+        const sourceCount = {};
+
+        for (const [topic, count] of Object.entries(analysis.topic_frequency || {})) {
+          incrementCount(topicFrequency, topic, Number(count) || 1);
+        }
+
+        for (const question of questions) {
+          const tags = Array.isArray(question.topic_tags) ? question.topic_tags : [];
+          if (tags.length) {
+            tags.forEach(topic => incrementCount(topicFrequency, topic));
+          } else {
+            const fallbackTopic = (question.question_text || question.text || '').split(/\s+/).slice(0, 4).join(' ');
+            incrementCount(topicFrequency, fallbackTopic || 'General');
+          }
+          incrementCount(typeCount, question.question_type || question.type || 'unknown');
+          incrementCount(difficultyCount, question.difficulty || question.difficulty_level || 'medium');
+          incrementCount(sourceCount, question.source || (question.predicted_exam_id ? 'predicted_exam_questions' : 'analysis_pool'));
+        }
+
+        const sortedTopics = Object.entries(topicFrequency).sort((a, b) => b[1] - a[1]);
+        const totalQuestions = Math.max(questions.length, 1);
+
+        if (sortedTopics.length === 0 && questions.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 40px;">No topic data available yet. Generate the study guide first.</div>';
+          return;
+        }
+
+        const renderBars = (title, counts, denominator = totalQuestions) => {
+          const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+          if (!entries.length) return '';
+          return `
+            <div style="margin-top: 20px;">
+              <div class="panel-title" style="margin-bottom: 12px;">${escapeHtml(title)}</div>
+              ${entries.map(([label, count]) => {
+                const percentage = Math.max(1, Math.round((count / Math.max(denominator, count, 1)) * 100));
+                return `
+                  <div style="margin-bottom: 10px;">
+                    <div style="font-size: 12px; display:flex; justify-content:space-between; gap:10px;">
+                      <span>${escapeHtml(label.replaceAll('_', ' '))}</span>
+                      <span>${escapeHtml(String(count))}</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; overflow: hidden;">
+                      <div style="width: ${percentage}%; background: linear-gradient(90deg, #8ab4ff, #a6ffda); height: 100%;"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        };
+
+        container.innerHTML = `
+          <div class="study-guide-content">
+            <h2>Topic Analysis</h2>
+            <p>This combines generated study-guide predictions, saved study-bank questions, previous predicted mock questions, and past-paper question tags.</p>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <div class="panel-title" style="margin-bottom: 12px;">Most Tested / Predicted Topics</div>
+            <div class="topic-cloud">
+              ${sortedTopics.slice(0, 18).map(([topic, count]) => `<span class="topic-tag">${escapeHtml(topic)} (${escapeHtml(String(count))})</span>`).join('')}
+            </div>
+          </div>
+          ${renderBars('Question Type Distribution', typeCount)}
+          ${renderBars('Difficulty Distribution', difficultyCount)}
+          ${renderBars('Question Source Mix', sourceCount)}
+          <div class="mock-pattern-summary" style="margin-top:20px;">
+            <strong>Pattern summary:</strong>
+            ${escapeHtml(String(analysis.total_papers_analyzed || 0))} past papers analyzed.
+            Typical marks: ${escapeHtml(String(analysis.average_total_marks || 'N/A'))}.
+            Typical duration: ${escapeHtml(String(analysis.average_duration || 'N/A'))} minutes.
+          </div>
+        `;
+      }
+
+      async function generateStudyPlan() {
+        const studyState = ExamStudyApp.studyState;
+
+        if (!studyState.selectedModuleId) {
+          alert('Please select a module first');
+          return;
+        }
+
+        const validChapterIds = getValidSelectedChapterIds();
+
+        if (!isValidUuid(studyState.selectedModuleId)) {
+          alert('Please select a valid module first');
+          return;
+        }
+
+        if (validChapterIds.length === 0) {
+          alert('Please select at least one chapter');
+          return;
+        }
+
+        const examDate = document.getElementById('examDate')?.value || null;
+        const intensity = document.getElementById('intensity')?.value || 'moderate';
+        studyState.intensity = intensity;
+
+        studyState.isGenerating = true;
+        const generateBtn = document.getElementById('generatePlanBtn');
+        generateBtn.disabled = true;
+        generateBtn.textContent = ExamStudyApp.studyMode.generatingText;
+
+        showResultsScreen();
+        document.getElementById('predictionsList').innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Building your study guide from saved chapter guides and predicted questions...</p></div>`;
+
+        try {
+          const token = await getToken();
+          const guideResponse = await fetch(`${ExamStudyApp.API_BASE}${ExamStudyApp.studyMode.guideEndpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              moduleId: studyState.selectedModuleId,
+              chapterIds: validChapterIds,
+              studyMode: ExamStudyApp.studyMode.mode,
+              examType: ExamStudyApp.studyMode.sourceExamType,
+              examDate,
+              intensity
+            })
+          });
+
+          const guideData = await guideResponse.json();
+          if (!guideResponse.ok || !guideData.ok || !guideData.study_guide) {
+            throw new Error(guideData.error || 'No study guide returned');
+          }
+
+          studyState.studyGuide = guideData.study_guide;
+          studyState.patternAnalysis = guideData.pattern_analysis || null;
+          studyState.predictions = guideData.predictions || [];
+          document.getElementById('predictionCount').textContent = studyState.predictions.length;
+          document.querySelectorAll('.prediction-tab').forEach(t => t.classList.remove('active'));
+          document.getElementById('aiTabBtn')?.classList.add('active');
+          studyState.currentTab = 'guide';
+          renderStudyGuide();
+        } catch (error) {
+          console.error('Generation failed:', error);
+          studyState.predictions = generateLocalPredictions();
+          studyState.studyGuide = buildLocalStudyGuide(studyState.predictions);
+          document.getElementById('predictionCount').textContent = studyState.predictions.length;
+          renderStudyGuide();
+        } finally {
+          studyState.isGenerating = false;
+          generateBtn.disabled = false;
+          setMockExamUi();
+          generateBtn.textContent = ExamStudyApp.studyMode.generateButton;
+        }
+      }
+
+      function flattenExamPaperForDisplay(examPaper) {
+        const questions = [];
+        for (const section of examPaper?.sections || []) {
+          for (const question of section.questions || []) {
+            questions.push({
+              section_id: section.section_id,
+              section_title: section.title,
+              question_number: question.number,
+              question_text: question.text,
+              question_type: question.type,
+              marks: question.marks,
+              difficulty: question.difficulty_level,
+              topic_tags: question.topic_tags || []
+            });
+          }
+        }
+        return questions;
+      }
+
+      function buildLocalFallbackExamPaper(predictions) {
+        const questions = (predictions || []).map((prediction, index) => ({
+          number: String(index + 1),
+          type: prediction.question_type || 'short_answer',
+          text: prediction.question_text,
+          options: prediction.options || [],
+          marks: prediction.marks || 5,
+          answer_space: '\n\n\n',
+          correct_answer: prediction.correct_answer || '',
+          bloom_level: 'understand',
+          difficulty_level: prediction.difficulty || 'medium',
+          topic_tags: prediction.topic_tags || [],
+          explanation: prediction.explanation || prediction.prediction_reason || ''
+        }));
+
+        return {
+          exam_title: `${ExamStudyApp.studyState.selectedModuleName || 'Selected Module'} - Predicted ${ExamStudyApp.studyMode.mode === 'test' ? 'Test' : 'Exam'}`,
+          course_code: '',
+          module_code: '',
+          duration_minutes: 180,
+          total_marks: questions.reduce((sum, question) => sum + question.marks, 0),
+          instructions: ['Answer ALL questions.', 'Marks are indicated in brackets.', 'Show all working where applicable.'],
+          student_fields: ['Student name', 'Student number', 'Date'],
+          cover_page_note: 'Fallback mock paper generated from local prediction templates.',
+          sections: [{
+            section_id: 'A',
+            title: 'Predicted Questions',
+            instructions: 'Answer all questions.',
+            total_marks: questions.reduce((sum, question) => sum + question.marks, 0),
+            questions
+          }],
+          answer_key: {},
+          end_marker: 'END OF PAPER'
+        };
+      }
+
+      function buildLocalStudyGuide(predictions) {
+        const modeTitle = ExamStudyApp.studyMode.mode === 'test' ? 'Test' : 'Exam';
+        const moduleName = ExamStudyApp.studyState.selectedModuleName || 'Selected Module';
+        const chapterNames = ExamStudyApp.studyState.chapters
+          .filter(chapter => ExamStudyApp.studyState.selectedChapters.includes(getChapterId(chapter)))
+          .map(chapter => chapter.chapter_title || `Chapter ${chapter.chapter_number || ''}`);
+        let markdown = `# ${modeTitle} Study Guide\n\n`;
+        markdown += `## Module\n${moduleName}\n\n`;
+        markdown += `## Scope\n${chapterNames.map(name => `- ${name}`).join('\n') || '- Selected chapters'}\n\n`;
+        markdown += `## Study Focus\n- Review each selected chapter summary.\n- Practise predicted questions before generating a mock paper.\n- Compare your answers with past paper wording.\n\n`;
+        markdown += `## Predicted Questions to Practise\n`;
+        (predictions || []).slice(0, 12).forEach((question, index) => {
+          markdown += `${index + 1}. ${question.question_text}\n`;
+        });
+        return markdown;
+      }
+
+      async function generateMockPaper() {
+        const studyState = ExamStudyApp.studyState;
+        const validChapterIds = getValidSelectedChapterIds();
+        const container = document.getElementById('predictionsList');
+
+        if (!studyState.selectedModuleId || validChapterIds.length === 0) {
+          alert('Select a module and at least one chapter first.');
+          showScopeScreen();
+          return;
+        }
+
+        container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>${escapeHtml(ExamStudyApp.studyMode.loadingText)}</p></div>`;
+
+        try {
+          const token = await getToken();
+          const predictResponse = await fetch(`${ExamStudyApp.API_BASE}${ExamStudyApp.studyMode.predictEndpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              moduleId: studyState.selectedModuleId,
+              chapterIds: validChapterIds,
+              studyMode: ExamStudyApp.studyMode.mode,
+              examType: ExamStudyApp.studyMode.sourceExamType,
+              examDate: studyState.examDate,
+              intensity: studyState.intensity
+            })
+          });
+
+          const predictData = await predictResponse.json();
+          if (!predictResponse.ok || !predictData.ok || !predictData.exam_paper) {
+            throw new Error(predictData.error || 'No complete mock paper returned');
+          }
+
+          studyState.generatedExamPaper = predictData.exam_paper;
+          studyState.patternAnalysis = predictData.pattern_analysis || studyState.patternAnalysis || null;
+          studyState.predictions = predictData.predictions || flattenExamPaperForDisplay(predictData.exam_paper);
+          document.getElementById('predictionCount').textContent = studyState.predictions.length;
+          renderCompleteExamPaper(studyState.generatedExamPaper, studyState.patternAnalysis);
+        } catch (error) {
+          console.error('Mock paper generation failed:', error);
+          studyState.predictions = studyState.predictions.length ? studyState.predictions : generateLocalPredictions();
+          studyState.generatedExamPaper = buildLocalFallbackExamPaper(studyState.predictions);
+          document.getElementById('predictionCount').textContent = studyState.predictions.length;
+          renderCompleteExamPaper(studyState.generatedExamPaper, studyState.patternAnalysis);
+        }
+      }
+
+      function renderCompleteExamPaper(examPaper, patternAnalysis) {
+        const container = document.getElementById('predictionsList');
+        if (!examPaper) {
+          const paperName = ExamStudyApp.studyMode.mode === 'test' ? 'mock test paper' : 'mock exam paper';
+          container.innerHTML = `<div style="text-align: center; padding: 40px;">No ${paperName} available. Generate one first.</div>`;
+          return;
+        }
+
+        const patternHtml = patternAnalysis ? `
+          <div class="mock-pattern-summary">
+            <strong>Pattern analysis:</strong>
+            ${escapeHtml(String(patternAnalysis.total_papers_analyzed || 0))} past papers analyzed.
+            Total marks pattern: ${escapeHtml(String(patternAnalysis.average_total_marks || examPaper.total_marks))}.
+            Duration pattern: ${escapeHtml(String(patternAnalysis.average_duration || examPaper.duration_minutes))} minutes.
+          </div>
+        ` : '';
+
+        let html = `
+          <div class="mock-exam-actions">
+            <button class="mock-exam-action" type="button" id="printMockExamBtn">Print</button>
+          </div>
+          <div class="mock-exam-paper" id="mockExamPaper">
+            <div class="mock-exam-cover">
+              <h2>${escapeHtml(examPaper.exam_title)}</h2>
+              <div>${escapeHtml([examPaper.course_code, examPaper.module_code].filter(Boolean).join(' / '))}</div>
+              <div class="mock-exam-meta">
+                <span>Duration: ${escapeHtml(String(examPaper.duration_minutes || 'N/A'))} minutes</span>
+                <span>Total: ${escapeHtml(String(examPaper.total_marks || 'N/A'))} marks</span>
+              </div>
+              <div>${escapeHtml(examPaper.cover_page_note || '')}</div>
+              <div class="mock-student-fields">
+                ${(examPaper.student_fields || []).map(field => `<div class="mock-student-field">${escapeHtml(field)}</div>`).join('')}
+              </div>
+            </div>
+
+            <div class="mock-instructions">
+              <strong>Instructions</strong>
+              <ol>${(Array.isArray(examPaper.instructions) ? examPaper.instructions : [examPaper.instructions]).map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ol>
+            </div>
+            ${patternHtml}
+        `;
+
+        for (const section of examPaper.sections || []) {
+          html += `
+            <section class="mock-exam-section">
+              <h3><span>Section ${escapeHtml(section.section_id)}: ${escapeHtml(section.title)}</span><span>${escapeHtml(String(section.total_marks || 0))} marks</span></h3>
+              <p>${escapeHtml(section.instructions || '')}</p>
+          `;
+
+          for (const question of section.questions || []) {
+            const displayNumber = `${section.section_id || ''}${question.number || ''}`.trim() || question.number || '';
+            html += `
+              <div class="mock-question">
+                <div class="mock-question-heading">
+                  <span>Question ${escapeHtml(String(displayNumber))}</span>
+                  <span>[${escapeHtml(String(question.marks || 0))}]</span>
+                </div>
+                <div>${escapeHtml(question.text || '')}</div>
+                ${renderQuestionExtras(question)}
+                <div class="mock-answer-space">${escapeHtml(question.answer_space || '')}</div>
+              </div>
+            `;
+          }
+
+          html += '</section>';
+        }
+
+        html += `
+            <div style="text-align:center; font-weight:700; margin-top: 28px;">${escapeHtml(examPaper.end_marker || 'END OF PAPER')}</div>
+            ${renderAnswerKey(examPaper.answer_key)}
+          </div>
+        `;
+
+        container.innerHTML = html;
+        document.getElementById('printMockExamBtn')?.addEventListener('click', () => window.print());
+      }
+
+      function renderQuestionExtras(question) {
+        let html = '';
+        if (question.options?.length) {
+          const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          html += `<ol class="mock-options" type="A">${question.options.map((option, index) => {
+            const cleanOption = String(option || '').replace(/^\s*(?:[A-Z][.)]|[A-Z]\s*[-:])\s*/i, '').trim();
+            return `<li value="${index + 1}">${escapeHtml(cleanOption || `Option ${labels[index] || index + 1}`)}</li>`;
+          }).join('')}</ol>`;
+        }
+        if (question.word_bank?.length) {
+          html += `<div class="mock-word-bank"><strong>Word bank:</strong> ${question.word_bank.map(word => escapeHtml(word)).join(', ')}</div>`;
+        }
+        if (question.matching_pairs && Object.keys(question.matching_pairs).length) {
+          html += '<table class="mock-matching-table"><tr><th>Column A</th><th>Column B</th></tr>';
+          for (const [left, right] of Object.entries(question.matching_pairs)) {
+            html += `<tr><td>${escapeHtml(left)}</td><td>${escapeHtml(right)}</td></tr>`;
+          }
+          html += '</table>';
+        }
+        return html;
+      }
+
+      function renderAnswerKey(answerKey) {
+        if (!answerKey || Object.keys(answerKey).length === 0) return '';
+        return `
+          <details class="mock-answer-key">
+            <summary><strong>Answer Key / Marking Guide</strong></summary>
+            ${Object.entries(answerKey).map(([key, value]) => `<div><strong>${escapeHtml(key)}:</strong> ${escapeHtml(typeof value === 'string' ? value : JSON.stringify(value))}</div>`).join('')}
+          </details>
+        `;
+      }
+      // Event Listeners
+      document.getElementById('selectAllBtn')?.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('.chapter-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+        checkboxes.forEach(cb => {
+          const event = new Event('change');
+          cb.dispatchEvent(event);
+        });
+      });
+      
+      applyStudyModeUi();
+
+      document.getElementById('refreshChaptersBtn')?.addEventListener('click', () => {
+        if (ExamStudyApp.studyState.selectedModuleId) loadChapters(ExamStudyApp.studyState.selectedModuleId);
+      });
+      
+      document.getElementById('refreshPredictionsBtn')?.addEventListener('click', generateStudyPlan);
+      document.getElementById('backToScopeBtn')?.addEventListener('click', showScopeScreen);
+      
+      document.querySelectorAll('.prediction-tab').forEach(tab => {
+        tab.addEventListener('click', async () => {
+          document.querySelectorAll('.prediction-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          ExamStudyApp.studyState.currentTab = tab.dataset.tab;
+          if (tab.dataset.tab === 'guide') {
+            renderStudyGuide();
+            return;
+          }
+          if (tab.dataset.tab === 'mock') {
+            renderMockPaperLauncher();
+            return;
+          }
+          if (tab.dataset.tab === 'past' && ExamStudyApp.studyState.selectedModuleId) {
+            await loadExamPapers(
+              ExamStudyApp.studyState.selectedModuleId,
+              ExamStudyApp.studyState.selectedModuleCourseId
+            );
+          }
+          if (tab.dataset.tab === 'practice') {
+            renderPracticeGamesPanel();
+            return;
+          }
+          renderPredictions(ExamStudyApp.studyState.predictions, ExamStudyApp.studyState.examQuestions.slice(0, 10));
+        });
+      });
+      
+      document.getElementById('generatePlanBtn')?.addEventListener('click', generateStudyPlan);
+      document.querySelectorAll('.practice-btn').forEach(button => {
+        button.addEventListener('click', () => openPracticeTool(button.dataset.practicePage));
+      });
+      
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const examDateInput = document.getElementById('examDate');
+      if (examDateInput) examDateInput.min = tomorrow.toISOString().split('T')[0];
+      
+      // Initialize the app
+      async function init() {
+        showScopeScreen();
+        if (!initSupabase()) {
+          alert('Failed to initialize Supabase. Please check your configuration.');
+          return;
+        }
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) return;
+        await loadModules();
+      }
+      
+      init();
+    })();
+  </script>
+</body>
+</html>

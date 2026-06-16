@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes Tutor - Module Guides</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.1);
+      --text: #e8eefc;
+      --muted: #aab6d6;
+      --accent: #7aa2ff;
+      --accent-glow: rgba(122,162,255,0.3);
+      --danger: #ff6b6b;
+      --ok: #31c48d;
+      --warning: #ffd166;
+      --shadow: 0 8px 32px rgba(0,0,0,.4);
+      --sidebar-width: 280px;
+      --header-height: 64px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { 
+      height: 100%; 
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(122,162,255,.12), transparent 60%),
+                  radial-gradient(1000px 600px at 80% 30%, rgba(49,196,141,.08), transparent 50%),
+                  var(--bg);
+      color: var(--text);
+    }
+
+    /* App Container with Sidebar */
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    /* ============================================
+       SIDEBAR
+       ============================================ */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: rgba(11, 18, 32, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      object-fit: contain;
+      padding: 4px;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .logo-text h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 2px;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* Navigation */
+    .nav-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 16px 12px 8px 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      border-radius: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      font-weight: 500;
+      width: 100%;
+      background: transparent;
+      border: none;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(122,162,255,0.15), rgba(49,196,141,0.08));
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      width: 28px;
+      text-align: center;
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--ok));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .sign-out-btn {
+      width: 100%;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      color: var(--danger);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sign-out-btn:hover {
+      background: rgba(255, 107, 107, 0.2);
+      border-color: rgba(255, 107, 107, 0.4);
+    }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      background: rgba(11, 18, 32, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .card-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Forms */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .form-field input, 
+    .form-field select {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 14px;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .form-field input:focus, 
+    .form-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(122, 162, 255, 0.1);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--ok));
+      border: none;
+      color: #0b1220;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-danger {
+      background: rgba(255, 107, 107, 0.15);
+      border-color: rgba(255, 107, 107, 0.3);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 107, 107, 0.25);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: none;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: none;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .status-text {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    td {
+      font-size: 13px;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    td:last-child, th:last-child {
+      text-align: right;
+    }
+
+    .actions-cell {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(49, 196, 141, 0.15);
+      color: var(--ok);
+      border: 1px solid rgba(49, 196, 141, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(255, 209, 102, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(255, 209, 102, 0.3);
+    }
+
+    /* Debug Box */
+    .debug-box {
+      margin-top: 24px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .debug-header {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .debug-content {
+      padding: 16px;
+      max-height: 200px;
+      overflow: auto;
+      background: rgba(0, 0, 0, 0.3);
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transition: left 0.3s ease;
+      }
+      .search-bar input {
+        width: 120px;
+      }
+    }
+    body.embedded {
+      background: transparent;
+    }
+    body.embedded .sidebar,
+    body.embedded .top-bar {
+      display: none;
+    }
+    body.embedded .app-container {
+      display: block;
+      height: auto;
+      min-height: 100%;
+      overflow: visible;
+    }
+    body.embedded .main-content {
+      display: block;
+      min-height: 100%;
+      overflow: visible;
+    }
+    body.embedded .content-area {
+      padding: 0;
+      overflow: visible;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-area">
+          <img class="logo-icon" src="../../assets/logo.png" alt="SkillFind AI logo" />
+          <div class="logo-text">
+            <h2>SkillFind AI</h2>
+            <p>Admin Dashboard</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <button class="nav-item" data-page="courses.html">
+          <span class="nav-icon">📚</span>
+          <span>Courses</span>
+        </button>
+        <button class="nav-item" data-page="module.html">
+          <span class="nav-icon">📦</span>
+          <span>Modules</span>
+        </button>
+        <button class="nav-item active" data-page="module-guide.html">
+          <span class="nav-icon">📘</span>
+          <span>Module Guides</span>
+        </button>
+        <button class="nav-item" data-page="exams.html">
+          <span class="nav-icon">📝</span>
+          <span>Exams & Tests</span>
+        </button>
+
+        <div class="nav-section-title">Management</div>
+        <button class="nav-item" data-page="request.html">
+          <span class="nav-icon">📬</span>
+          <span>Enrollment Requests</span>
+        </button>
+        <button class="nav-item" data-page="chapter.html">
+          <span class="nav-icon">📑</span>
+          <span>Chapters</span>
+        </button>
+        <button class="nav-item" data-page="students.html">
+          <span class="nav-icon">👥</span>
+          <span>Students</span>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+        <button id="btnSignOut" class="sign-out-btn">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 class="page-title">Module Guides</h1>
+        <div class="top-bar-actions">
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" placeholder="Search guides..." id="searchInput" />
+          </div>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div class="container">
+          <!-- Module Guides Panel -->
+          <div class="card">
+            <div class="card-header">
+              <h2>📘 Module Guides</h2>
+              <button id="btnReloadGuides" class="btn btn-ghost">⟳ Reload</button>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Select Course</label>
+                <select id="guidesCourseSelect">
+                  <option value="">Loading courses...</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Select Module</label>
+                <select id="guidesModuleSelect">
+                  <option value="">Select a course first</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Guide Title</label>
+                <input id="guideTitle" placeholder="e.g. CMR3 Student Module Guide" />
+              </div>
+              <div class="form-field">
+                <label>Description</label>
+                <input id="guideDescription" placeholder="Short optional summary" />
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>📎 Module Guide PDF</label>
+                <input id="guideFile" type="file" accept=".pdf,application/pdf" />
+              </div>
+              <div class="form-field">
+                <label>Current PDF</label>
+                <input id="guideCurrentFile" readonly placeholder="No guide uploaded yet" style="background: rgba(0,0,0,0.2);" />
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <label class="check-row">
+                <input type="checkbox" id="guideIsPublished" checked />
+                <span>Published (visible to students)</span>
+              </label>
+              <button id="btnSaveGuide" class="btn btn-primary">💾 Save Module Guide</button>
+              <button id="btnClearForm" class="btn btn-ghost">Clear</button>
+              <div id="guidesStatus" class="status-text"></div>
+            </div>
+
+            <div class="table-wrapper">
+              <table id="guidesTable">
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Module</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Version</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px;">Loading module guides...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Debug Box -->
+          <div class="debug-box">
+            <div class="debug-header">
+              <span>🔍 Debug Console</span>
+              <button id="btnClearDebug" class="btn btn-ghost">Clear</button>
+            </div>
+            <pre id="debug" class="debug-content"></pre>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    if (window.self !== window.top) {
+      document.body.classList.add("embedded");
+    }
+
+    // ============================================
+    // MODULE GUIDES PAGE - STANDALONE
+    // ============================================
+
+    // Configuration
+    const API_BASE = "http://localhost:5050/admin";
+    const CFG = window.APP_CONFIG || {};
+    const SUPABASE_URL = CFG.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase configuration");
+    }
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // DOM Elements
+    const guidesCourseSelect = document.getElementById('guidesCourseSelect');
+    const guidesModuleSelect = document.getElementById('guidesModuleSelect');
+    const guideTitle = document.getElementById('guideTitle');
+    const guideDescription = document.getElementById('guideDescription');
+    const guideFile = document.getElementById('guideFile');
+    const guideCurrentFile = document.getElementById('guideCurrentFile');
+    const guideIsPublished = document.getElementById('guideIsPublished');
+    const btnSaveGuide = document.getElementById('btnSaveGuide');
+    const btnClearForm = document.getElementById('btnClearForm');
+    const btnReloadGuides = document.getElementById('btnReloadGuides');
+    const btnSignOut = document.getElementById('btnSignOut');
+    const btnClearDebug = document.getElementById('btnClearDebug');
+    const guidesStatus = document.getElementById('guidesStatus');
+    const guidesTable = document.querySelector('#guidesTable tbody');
+    const debug = document.getElementById('debug');
+    const userName = document.getElementById('userName');
+    const searchInput = document.getElementById('searchInput');
+
+    let courses = [];
+    let modules = [];
+    let moduleGuides = [];
+    let currentUser = null;
+
+    // Helper Functions
+    function logDebug(obj) {
+      if (debug) debug.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    }
+
+    async function getAccessToken() {
+      const adminSession = localStorage.getItem('adminSession');
+      if (adminSession) {
+        try {
+          const session = JSON.parse(adminSession);
+          if (session?.access_token) return session.access_token;
+        } catch (e) {}
+      }
+      const { data, error } = await sb.auth.getSession();
+      if (error) throw error;
+      return data?.session?.access_token || "";
+    }
+
+    async function apiFetch(path, opts = {}) {
+      const token = await getAccessToken();
+      const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); } catch { json = { raw: text }; }
+      if (!res.ok) throw new Error(json?.message || json?.error || `HTTP ${res.status}`);
+      return json;
+    }
+
+    // Navigation
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+    // Load Data
+    async function loadCourses() {
+      try {
+        const data = await apiFetch("/courses");
+        courses = data.courses || [];
+        guidesCourseSelect.innerHTML = '<option value="">Select a course...</option>';
+        courses.forEach(course => {
+          const option = document.createElement('option');
+          option.value = course.id;
+          option.textContent = `${course.name}${course.code ? ` (${course.code})` : ''}`;
+          guidesCourseSelect.appendChild(option);
+        });
+        return courses;
+      } catch (error) {
+        console.error("Failed to load courses:", error);
+        guidesCourseSelect.innerHTML = '<option value="">Error loading courses</option>';
+        return [];
+      }
+    }
+
+    async function loadModules(courseId) {
+      if (!courseId) {
+        guidesModuleSelect.innerHTML = '<option value="">Select a course first</option>';
+        return [];
+      }
+      
+      guidesModuleSelect.innerHTML = '<option value="">Loading modules...</option>';
+      try {
+        const data = await apiFetch(`/modules?courseId=${courseId}`);
+        modules = data.modules || [];
+        guidesModuleSelect.innerHTML = '<option value="">Select a module...</option>';
+        modules.forEach(module => {
+          const option = document.createElement('option');
+          option.value = module.id;
+          option.textContent = module.name;
+          guidesModuleSelect.appendChild(option);
+        });
+        return modules;
+      } catch (error) {
+        console.error("Failed to load modules:", error);
+        guidesModuleSelect.innerHTML = '<option value="">Error loading modules</option>';
+        return [];
+      }
+    }
+
+    async function loadModuleGuides(moduleId) {
+      if (!moduleId) {
+        renderGuidesTable([]);
+        return [];
+      }
+      
+      try {
+        const data = await apiFetch(`/module-guides?moduleId=${moduleId}`);
+        moduleGuides = data.guides || [];
+        renderGuidesTable(moduleGuides);
+        return moduleGuides;
+      } catch (error) {
+        console.error("Failed to load module guides:", error);
+        renderGuidesTable([]);
+        return [];
+      }
+    }
+
+    // Fill form with existing guide
+    function fillFormWithGuide(guide) {
+      if (!guide) return;
+      guideTitle.value = guide.title || '';
+      guideDescription.value = guide.description || '';
+      guideIsPublished.checked = guide.is_published === true;
+      guideCurrentFile.value = guide.file_name || guide.file_url || 'No file';
+      guideFile.value = '';
+    }
+
+    function clearForm() {
+      guideTitle.value = '';
+      guideDescription.value = '';
+      guideIsPublished.checked = true;
+      guideFile.value = '';
+      guideCurrentFile.value = '';
+      guidesStatus.textContent = '';
+    }
+
+    // Render guides table
+    function renderGuidesTable(guides) {
+      if (!guidesTable) return;
+      
+      if (!guides.length) {
+        guidesTable.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">No module guides found for this module.</td></tr>';
+        return;
+      }
+      
+      guidesTable.innerHTML = '';
+      for (const guide of guides) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(guide.course_name || '-')}</td>
+          <td>${escapeHtml(guide.module_name || '-')}</td>
+          <td><strong>${escapeHtml(guide.title || '')}</strong><br><small>${escapeHtml(guide.description || '')}</small></td>
+          <td><span class="badge ${guide.is_published ? 'badge-success' : 'badge-warning'}">${guide.is_published ? 'Published' : 'Draft'}</span></td>
+          <td>${guide.version || 1}</td>
+          <td>${fmtDate(guide.updated_at)}</td>
+          <td class="actions-cell">
+            ${guide.file_url ? `<button class="btn btn-sm view-guide" data-url="${escapeHtml(guide.file_url)}">View</button>` : ''}
+            <button class="btn btn-sm edit-guide" data-id="${guide.id}">Edit</button>
+            <button class="btn btn-danger btn-sm delete-guide" data-id="${guide.id}" data-title="${escapeHtml(guide.title)}">Delete</button>
+          </td>
+        `;
+        guidesTable.appendChild(tr);
+      }
+      
+      // Attach events
+      document.querySelectorAll('.view-guide').forEach(btn => {
+        btn.addEventListener('click', () => window.open(btn.dataset.url, '_blank'));
+      });
+      document.querySelectorAll('.edit-guide').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const guide = moduleGuides.find(g => g.id === btn.dataset.id);
+          if (guide) fillFormWithGuide(guide);
+        });
+      });
+      document.querySelectorAll('.delete-guide').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm(`Delete guide "${btn.dataset.title}"? This action cannot be undone.`)) return;
+          await apiFetch(`/module-guides/${btn.dataset.id}`, { method: 'DELETE' });
+          guidesStatus.textContent = '✅ Guide deleted successfully';
+          await loadModuleGuides(guidesModuleSelect.value);
+        });
+      });
+    }
+
+    // Search functionality
+    function filterGuides() {
+      const searchTerm = searchInput?.value.toLowerCase() || '';
+      const filtered = moduleGuides.filter(guide => 
+        guide.title?.toLowerCase().includes(searchTerm) ||
+        guide.description?.toLowerCase().includes(searchTerm) ||
+        guide.module_name?.toLowerCase().includes(searchTerm)
+      );
+      renderGuidesTable(filtered);
+    }
+
+    // Save guide
+    async function saveModuleGuide() {
+      const moduleId = guidesModuleSelect.value;
+      const title = guideTitle.value.trim();
+      const description = guideDescription.value.trim();
+      const isPublished = guideIsPublished.checked;
+      const guideFileObj = guideFile.files?.[0];
+      const existingGuide = moduleGuides.find(g => g.module_id === moduleId);
+      
+      if (!moduleId) {
+        guidesStatus.textContent = '❌ Please select a module';
+        return;
+      }
+      if (!title) {
+        guidesStatus.textContent = '❌ Guide title is required';
+        return;
+      }
+      if (!guideFileObj && !existingGuide?.file_path && !existingGuide?.file_url) {
+        guidesStatus.textContent = '❌ Please upload a PDF file';
+        return;
+      }
+      if (guideFileObj && guideFileObj.type !== 'application/pdf' && !guideFileObj.name.toLowerCase().endsWith('.pdf')) {
+        guidesStatus.textContent = '❌ Only PDF files are supported';
+        return;
+      }
+      
+      guidesStatus.textContent = 'Saving...';
+      
+      const fd = new FormData();
+      fd.append('moduleId', moduleId);
+      fd.append('title', title);
+      if (description) fd.append('description', description);
+      fd.append('isPublished', isPublished ? 'true' : 'false');
+      if (guideFileObj) fd.append('guideFile', guideFileObj);
+      
+      const token = await getAccessToken();
+      const res = await fetch(`${API_BASE}/module-guides/upload`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd
+      });
+      const json = await res.json();
+      
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || 'Upload failed');
+      }
+      
+      guidesStatus.textContent = '✅ Module guide saved successfully!';
+      clearForm();
+      await loadModuleGuides(moduleId);
+      setTimeout(() => { guidesStatus.textContent = ''; }, 3000);
+    }
+
+    // Auth check
+    async function checkAuth() {
+      try {
+        const { data } = await sb.auth.getSession();
+        if (!data?.session) {
+          window.location.href = 'adminlogin.html';
+          return false;
+        }
+        
+        const { data: userData } = await sb.auth.getUser();
+        if (userData?.user) {
+          currentUser = userData.user;
+          if (userName) userName.textContent = userData.user.email?.split('@')[0] || 'Admin';
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Auth error:', error);
+        window.location.href = 'adminlogin.html';
+        return false;
+      }
+    }
+
+    // Event Listeners
+    guidesCourseSelect?.addEventListener('change', async (e) => {
+      await loadModules(e.target.value);
+      guidesModuleSelect.value = '';
+      clearForm();
+      renderGuidesTable([]);
+    });
+    
+    guidesModuleSelect?.addEventListener('change', async (e) => {
+      await loadModuleGuides(e.target.value);
+      const existingGuide = moduleGuides.find(g => g.module_id === e.target.value);
+      if (existingGuide) {
+        fillFormWithGuide(existingGuide);
+      } else {
+        clearForm();
+      }
+    });
+    
+    btnSaveGuide?.addEventListener('click', saveModuleGuide);
+    btnClearForm?.addEventListener('click', clearForm);
+    btnReloadGuides?.addEventListener('click', async () => {
+      if (guidesModuleSelect.value) {
+        await loadModuleGuides(guidesModuleSelect.value);
+        guidesStatus.textContent = '✅ Reloaded';
+        setTimeout(() => { guidesStatus.textContent = ''; }, 2000);
+      }
+    });
+    
+    searchInput?.addEventListener('input', filterGuides);
+    
+    btnClearDebug?.addEventListener('click', () => {
+      if (debug) debug.textContent = '';
+    });
+    
+    btnSignOut?.addEventListener('click', async () => {
+      await sb.auth.signOut();
+      localStorage.removeItem('adminSession');
+      window.location.href = 'adminlogin.html';
+    });
+    
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const page = btn.dataset.page;
+        if (page) navigateTo(page);
+      });
+    });
+    
+    // Initialize
+    async function init() {
+      const isAuth = await checkAuth();
+      if (!isAuth) return;
+      await loadCourses();
+    }
+    
+    init();
+  </script>
+</body>
+</html>

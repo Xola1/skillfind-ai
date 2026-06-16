@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>My Library - SkillFind AI</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0b1220;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --line: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --accent: #8ab4ff;
+      --accent2: #a6ffda;
+      --danger: #ff9b9b;
+      --shadow: 0 18px 48px rgba(0,0,0,.32);
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 560px at 12% 0%, rgba(138,180,255,.16), transparent 55%),
+        radial-gradient(720px 520px at 100% 20%, rgba(166,255,218,.10), transparent 60%),
+        var(--bg);
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    body.embedded .back-btn {
+      display: none;
+    }
+
+    .back-btn,
+    .btn {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      text-decoration: none;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn.primary {
+      border: 0;
+      color: #07111f;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(138,180,255,.14), rgba(166,255,218,.07));
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--accent2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 30px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .sub {
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 760px;
+    }
+
+    .library-shell {
+      display: block;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .module-panel {
+      position: sticky;
+      top: 18px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 850;
+      color: var(--accent2);
+      margin-bottom: 12px;
+    }
+
+    .module-list {
+      display: grid;
+      gap: 8px;
+      max-height: 52vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .module-option {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.045);
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .module-option input {
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent2);
+    }
+
+    .module-name {
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .course-name {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .status {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+      padding: 12px;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .recommendations {
+      display: grid;
+      gap: 14px;
+    }
+
+    .module-result {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      padding: 16px;
+    }
+
+    .module-result-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .module-result h2 {
+      font-size: 19px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .guide-link {
+      color: #0b1220;
+      background: var(--accent2);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .summary {
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    .topic-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .topic-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      padding: 14px;
+    }
+
+    .topic-title {
+      font-size: 16px;
+      font-weight: 850;
+      margin-bottom: 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .topic-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+    }
+
+    .resource {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      padding: 10px;
+      text-decoration: none;
+      min-height: 78px;
+    }
+
+    .resource strong {
+      display: block;
+      color: var(--accent);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .resource span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .empty,
+    .error {
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      padding: 30px 16px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .error {
+      color: var(--danger);
+      border-color: rgba(255,155,155,.35);
+      background: rgba(255,155,155,.08);
+    }
+
+    @media (max-width: 840px) {
+      .page {
+        padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .back-btn,
+      .topbar .btn {
+        width: 100%;
+      }
+
+      .hero {
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .module-result,
+      .panel,
+      .topic-card {
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .module-result-head {
+        flex-direction: column;
+      }
+
+      .guide-link {
+        width: 100%;
+        text-align: center;
+      }
+
+      .resource-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    if (new URLSearchParams(window.location.search).get("embedded") === "1") {
+      document.body.classList.add("embedded");
+    }
+  </script>
+  <main class="page">
+    <header class="topbar">
+      <a class="back-btn" href="index.html?openChat=1">← Back to Learning</a>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">My Library</div>
+      <h1>Learning resources for your modules</h1>
+      <p class="sub">
+        SkillFind AI reads all your published module guides, identifies the topics and skills inside them, and recommends external websites where you can study those topics further.
+      </p>
+    </section>
+
+    <section class="library-shell">
+      <section>
+        <div id="status" class="status">Loading your modules and generating your library...</div>
+        <div id="results" class="recommendations">
+          <div class="empty">Your recommended websites will appear here.</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://localhost:5050";
+
+    if (!window.APP_CONFIG || !window.APP_CONFIG.SUPABASE_URL || !window.APP_CONFIG.SUPABASE_ANON_KEY) {
+      alert("Supabase config is missing. Please check config.js.");
+      window.location.replace("login.html");
+    }
+
+    const sbClient = window.supabase.createClient(
+      window.APP_CONFIG.SUPABASE_URL,
+      window.APP_CONFIG.SUPABASE_ANON_KEY
+    );
+
+    const $ = id => document.getElementById(id);
+    const ui = {
+      results: $("results"),
+      status: $("status")
+    };
+
+    let modules = [];
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function setStatus(message) {
+      ui.status.textContent = message;
+    }
+
+    async function getToken() {
+      const { data } = await sbClient.auth.getSession();
+      return data && data.session ? data.session.access_token : "";
+    }
+
+    async function apiFetch(path, opts = {}) {
+      const token = await getToken();
+      if (!token) {
+        window.location.replace("login.html");
+        throw new Error("Not authenticated.");
+      }
+
+      const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+      if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+
+      const response = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || json.ok === false) {
+        throw new Error(json.error || json.message || `HTTP ${response.status}`);
+      }
+      return json;
+    }
+
+    async function protectStudentPage() {
+      const { data } = await sbClient.auth.getSession();
+      const session = data && data.session;
+      if (!session) {
+        window.location.replace("login.html");
+        return false;
+      }
+
+      const { data: profile, error } = await sbClient
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error || !profile || profile.role !== "student") {
+        await sbClient.auth.signOut();
+        window.location.replace("login.html");
+        return false;
+      }
+
+      return true;
+    }
+
+    function renderModules() {
+      if (!modules.length) {
+        ui.results.innerHTML = `<div class="empty">No modules are linked to your student profile yet.</div>`;
+        return;
+      }
+    }
+
+    function selectedModuleIds() {
+      return modules.map(module => module.module_id).filter(Boolean);
+    }
+
+    function cleanTopic(value) {
+      return String(value || "")
+        .replace(/[^\w\s+#.-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function resourceSearchUrl(base, topic, suffix = "") {
+      const query = encodeURIComponent(`${topic} ${suffix}`.trim());
+      return base.replace("{q}", query);
+    }
+
+    function detectSubjectArea(topic, moduleName) {
+      const text = `${topic || ""} ${moduleName || ""}`.toLowerCase();
+
+      if (/\b(accounting|finance|marketing|management|entrepreneur|economics|business|sales|hr|human resource|operations|supply chain)\b/.test(text)) {
+        return "business";
+      }
+
+      if (/\b(hospitality|tourism|hotel|restaurant|food|beverage|culinary|guest|front office|housekeeping|travel)\b/.test(text)) {
+        return "hospitality";
+      }
+
+      if (/\b(math|mathematics|algebra|calculus|statistics|probability|geometry|trigonometry|numeracy|quantitative)\b/.test(text)) {
+        return "maths";
+      }
+
+      if (/\b(programming|software|computer|network|database|cyber|web|javascript|python|data|information technology|it\b|systems)\b/.test(text)) {
+        return "technology";
+      }
+
+      if (/\b(health|nursing|anatomy|physiology|medical|biology|chemistry|science|laboratory|clinical)\b/.test(text)) {
+        return "science";
+      }
+
+      if (/\b(education|teaching|pedagogy|curriculum|assessment|classroom|learning theory)\b/.test(text)) {
+        return "education";
+      }
+
+      return "general";
+    }
+
+    function buildResources(topic, moduleName) {
+      const clean = cleanTopic(topic || moduleName || "course topic");
+      const courseContext = cleanTopic(moduleName || "");
+      const query = courseContext && !clean.toLowerCase().includes(courseContext.toLowerCase())
+        ? `${clean} ${courseContext}`
+        : clean;
+      const subjectArea = detectSubjectArea(clean, courseContext);
+
+      const coreResources = [
+        {
+          label: "OpenLearn",
+          desc: "Free university-level short courses across many subjects.",
+          url: resourceSearchUrl("https://www.open.edu/openlearn/search-results?search_api_fulltext={q}", query)
+        },
+        {
+          label: "Coursera",
+          desc: "University-style courses and guided learning paths.",
+          url: resourceSearchUrl("https://www.coursera.org/search?query={q}", query)
+        },
+        {
+          label: "edX",
+          desc: "Structured courses from universities and training providers.",
+          url: resourceSearchUrl("https://www.edx.org/search?q={q}", query)
+        },
+        {
+          label: "YouTube Learning",
+          desc: "Video explanations, walkthroughs, and worked examples.",
+          url: resourceSearchUrl("https://www.youtube.com/results?search_query={q}", query, "tutorial")
+        },
+        {
+          label: "Google Scholar",
+          desc: "Academic papers and deeper reading for advanced topics.",
+          url: resourceSearchUrl("https://scholar.google.com/scholar?q={q}", query)
+        }
+      ];
+
+      const subjectResources = {
+        business: [
+          {
+            label: "HubSpot Academy",
+            desc: "Practical business, marketing, sales, and service courses.",
+            url: resourceSearchUrl("https://academy.hubspot.com/results?q={q}", query)
+          },
+          {
+            label: "Investopedia",
+            desc: "Plain-language explanations for finance, accounting, and business terms.",
+            url: resourceSearchUrl("https://www.investopedia.com/search?q={q}", query)
+          }
+        ],
+        hospitality: [
+          {
+            label: "Typsy",
+            desc: "Hospitality, restaurant, hotel, and guest-service learning videos.",
+            url: resourceSearchUrl("https://www.typsy.com/search?q={q}", query)
+          },
+          {
+            label: "UN Tourism",
+            desc: "Tourism and hospitality research, reports, and learning context.",
+            url: resourceSearchUrl("https://www.unwto.org/search?keys={q}", query)
+          }
+        ],
+        maths: [
+          {
+            label: "Khan Academy",
+            desc: "Step-by-step maths lessons, examples, and practice.",
+            url: resourceSearchUrl("https://www.khanacademy.org/search?page_search_query={q}", query)
+          },
+          {
+            label: "Wolfram MathWorld",
+            desc: "Detailed references for mathematical concepts and formulas.",
+            url: resourceSearchUrl("https://mathworld.wolfram.com/search/?query={q}", query)
+          }
+        ],
+        technology: [
+          {
+            label: "FreeCodeCamp",
+            desc: "Practical tutorials for programming and technology topics.",
+            url: resourceSearchUrl("https://www.freecodecamp.org/news/search/?query={q}", query)
+          },
+          {
+            label: "MDN Web Docs",
+            desc: "Reliable documentation for web and programming concepts.",
+            url: resourceSearchUrl("https://developer.mozilla.org/en-US/search?q={q}", query)
+          }
+        ],
+        science: [
+          {
+            label: "Khan Academy",
+            desc: "Accessible science lessons and practice for core concepts.",
+            url: resourceSearchUrl("https://www.khanacademy.org/search?page_search_query={q}", query)
+          },
+          {
+            label: "PubMed",
+            desc: "Research articles for health, life science, and clinical topics.",
+            url: resourceSearchUrl("https://pubmed.ncbi.nlm.nih.gov/?term={q}", query)
+          }
+        ],
+        education: [
+          {
+            label: "Edutopia",
+            desc: "Teaching strategies, classroom practice, and learning design articles.",
+            url: resourceSearchUrl("https://www.edutopia.org/search?search={q}", query)
+          },
+          {
+            label: "ERIC",
+            desc: "Education research, reports, and academic literature.",
+            url: resourceSearchUrl("https://eric.ed.gov/?q={q}", query)
+          }
+        ],
+        general: [
+          {
+            label: "Khan Academy",
+            desc: "Foundational explanations and practice for many academic topics.",
+            url: resourceSearchUrl("https://www.khanacademy.org/search?page_search_query={q}", query)
+          },
+          {
+            label: "OER Commons",
+            desc: "Open educational resources across many courses and subjects.",
+            url: resourceSearchUrl("https://oercommons.org/search?f.search={q}", query)
+          }
+        ]
+      };
+
+      return [...coreResources, ...(subjectResources[subjectArea] || subjectResources.general)];
+    }
+
+    function renderResults(results) {
+      const usable = (results || []).filter(result => result.ok && Array.isArray(result.skills) && result.skills.length);
+
+      if (!usable.length) {
+        ui.results.innerHTML = `<div class="error">No recommendations could be generated yet. Make sure the selected modules have published module guides with extracted text.</div>`;
+        return;
+      }
+
+      ui.results.innerHTML = usable.map(result => {
+        const moduleName = result.module?.name || "Module";
+        const guideLink = result.guide?.file_url
+          ? `<a class="guide-link" href="${escapeHtml(result.guide.file_url)}" target="_blank" rel="noreferrer">Open guide</a>`
+          : "";
+
+        const topics = result.skills.slice(0, 6).map(skill => {
+          const resources = buildResources(skill.title, moduleName).map(resource => `
+            <a class="resource" href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">
+              <strong>${escapeHtml(resource.label)}</strong>
+              <span>${escapeHtml(resource.desc)}</span>
+            </a>
+          `).join("");
+
+          return `
+            <article class="topic-card">
+              <div class="topic-title">${escapeHtml(skill.title)}</div>
+              <div class="topic-desc">${escapeHtml(skill.description || skill.evidence || "Recommended from your module guide.")}</div>
+              <div class="resource-grid">${resources}</div>
+            </article>
+          `;
+        }).join("");
+
+        return `
+          <article class="module-result">
+            <div class="module-result-head">
+              <div>
+                <h2>${escapeHtml(moduleName)}</h2>
+                <div class="course-name">${escapeHtml(result.module?.course_name || "")}</div>
+              </div>
+              ${guideLink}
+            </div>
+            <p class="summary">${escapeHtml(result.summary || "Recommendations generated from the published module guide.")}</p>
+            <div class="topic-grid">${topics}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadModules() {
+      setStatus("Loading your modules...");
+      const data = await apiFetch("/student/modules");
+      modules = data.modules || [];
+      renderModules();
+      if (!modules.length) {
+        setStatus("No modules found.");
+        return;
+      }
+
+      setStatus("All modules selected. Generating your library...");
+      await generateLibrary();
+    }
+
+    async function generateLibrary() {
+      const moduleIds = selectedModuleIds();
+      if (!moduleIds.length) {
+        setStatus("Select at least one module first.");
+        return;
+      }
+
+      ui.results.innerHTML = `<div class="empty">AI is reading your module guides and preparing external learning websites...</div>`;
+      setStatus("Reading selected module guides...");
+
+      try {
+        const data = await apiFetch("/student/module-skills", {
+          method: "POST",
+          body: JSON.stringify({ moduleIds })
+        });
+        renderResults(data.results || []);
+        setStatus("Library recommendations generated from your module guides.");
+      } catch (error) {
+        ui.results.innerHTML = `<div class="error">${escapeHtml(error.message || "Failed to generate library recommendations.")}</div>`;
+        setStatus("Could not generate recommendations.");
+      }
+    }
+
+    (async () => {
+      try {
+        const ok = await protectStudentPage();
+        if (!ok) return;
+        await loadModules();
+      } catch (error) {
+        ui.results.innerHTML = `<div class="error">${escapeHtml(error.message || "Failed to load library.")}</div>`;
+        setStatus("Failed to load library.");
+      }
+    })();
+  </script>
+</body>
+</html>

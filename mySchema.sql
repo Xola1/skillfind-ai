@@ -1,0 +1,560 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.courses (
+  code text UNIQUE,
+  name text NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT courses_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.modules (
+  course_id uuid NOT NULL,
+  code text,
+  name text NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT modules_pkey PRIMARY KEY (id),
+  CONSTRAINT modules_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  role text NOT NULL CHECK (role = ANY (ARRAY['admin'::text, 'student'::text])),
+  full_name text,
+  course_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  location text,
+  linkedin_url text,
+  bio text,
+  education_level text CHECK (education_level = ANY (ARRAY['high_school'::text, 'university'::text, 'tvet'::text, 'graduate'::text])),
+  graduation_year integer,
+  looking_for_job boolean DEFAULT false,
+  job_search_status text CHECK (job_search_status = ANY (ARRAY['actively_searching'::text, 'passively_looking'::text, 'not_searching'::text])),
+  avatar_url text,
+  phone text,
+  github_url text,
+  portfolio_url text,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+  CONSTRAINT profiles_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+);
+CREATE TABLE public.enrollments (
+  student_id uuid NOT NULL,
+  module_id uuid NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT enrollments_pkey PRIMARY KEY (id),
+  CONSTRAINT enrollments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT enrollments_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.chapters (
+  module_id uuid NOT NULL,
+  chapter_number integer,
+  chapter_title text NOT NULL,
+  source_filename text,
+  method text,
+  created_by uuid,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT chapters_pkey PRIMARY KEY (id),
+  CONSTRAINT chapters_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT chapters_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.chapter_chunks (
+  chapter_id uuid NOT NULL,
+  chunk_index integer NOT NULL,
+  text text NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  search_text tsvector DEFAULT to_tsvector('english'::regconfig, COALESCE(text, ''::text)),
+  CONSTRAINT chapter_chunks_pkey PRIMARY KEY (id),
+  CONSTRAINT chapter_chunks_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.enrollment_requests (
+  student_id uuid NOT NULL,
+  course_id uuid NOT NULL,
+  module_id uuid NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT enrollment_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT enrollment_requests_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT enrollment_requests_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id),
+  CONSTRAINT enrollment_requests_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.chat_messages (
+  user_id uuid NOT NULL,
+  conversation_id text NOT NULL,
+  module_id uuid NOT NULL,
+  chapter_id uuid,
+  role text NOT NULL CHECK (role = ANY (ARRAY['user'::text, 'assistant'::text, 'system'::text])),
+  content text NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT chat_messages_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.skills_taxonomy (
+  name text NOT NULL UNIQUE,
+  category text NOT NULL CHECK (category = ANY (ARRAY['technical'::text, 'soft_skill'::text, 'domain_knowledge'::text, 'tool'::text])),
+  description text,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  aliases ARRAY DEFAULT '{}'::text[],
+  level_required integer DEFAULT 1,
+  in_demand boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT skills_taxonomy_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.student_skills (
+  student_id uuid NOT NULL,
+  skill_id uuid NOT NULL,
+  proficiency_level integer CHECK (proficiency_level >= 1 AND proficiency_level <= 5),
+  acquired_from text CHECK (acquired_from = ANY (ARRAY['course'::text, 'self_study'::text, 'work_experience'::text, 'project'::text, 'certificate'::text])),
+  source_module_id uuid,
+  source_course_id uuid,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  verified boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT student_skills_pkey PRIMARY KEY (id),
+  CONSTRAINT student_skills_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT student_skills_skill_id_fkey FOREIGN KEY (skill_id) REFERENCES public.skills_taxonomy(id),
+  CONSTRAINT student_skills_source_module_id_fkey FOREIGN KEY (source_module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.module_skills (
+  module_id uuid NOT NULL,
+  skill_id uuid NOT NULL,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  weight double precision DEFAULT 1.0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT module_skills_pkey PRIMARY KEY (id),
+  CONSTRAINT module_skills_skill_id_fkey FOREIGN KEY (skill_id) REFERENCES public.skills_taxonomy(id),
+  CONSTRAINT module_skills_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.jobs (
+  title text NOT NULL,
+  company text NOT NULL,
+  description text NOT NULL,
+  requirements ARRAY,
+  location text,
+  salary_min integer,
+  salary_max integer,
+  job_type text CHECK (job_type = ANY (ARRAY['full_time'::text, 'part_time'::text, 'contract'::text, 'internship'::text, 'remote'::text, 'graduate'::text])),
+  experience_level text CHECK (experience_level = ANY (ARRAY['entry'::text, 'mid'::text, 'senior'::text])),
+  application_url text,
+  application_deadline date,
+  source text,
+  external_id text,
+  posted_date date,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  salary_currency text DEFAULT 'ZAR'::text,
+  skills_required jsonb DEFAULT '[]'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT jobs_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.job_applications (
+  student_id uuid NOT NULL,
+  job_id uuid NOT NULL,
+  status text CHECK (status = ANY (ARRAY['saved'::text, 'applied'::text, 'interviewing'::text, 'offered'::text, 'rejected'::text, 'accepted'::text])),
+  applied_date timestamp with time zone,
+  notes text,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT job_applications_pkey PRIMARY KEY (id),
+  CONSTRAINT job_applications_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT job_applications_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id)
+);
+CREATE TABLE public.career_pathways (
+  title text NOT NULL,
+  description text,
+  industry text,
+  average_salary integer,
+  growth_potential text,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  required_skills jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT career_pathways_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.resource_providers (
+  name text NOT NULL UNIQUE,
+  website text,
+  description text,
+  logo_url text,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  is_free boolean DEFAULT true,
+  has_certificates boolean DEFAULT false,
+  trust_score double precision DEFAULT 5.0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT resource_providers_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.free_courses (
+  title text NOT NULL,
+  description text,
+  provider_id uuid,
+  course_url text NOT NULL,
+  image_url text,
+  difficulty_level text CHECK (difficulty_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  duration text,
+  rating double precision,
+  review_count integer,
+  last_updated timestamp with time zone,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  skills_taught ARRAY DEFAULT '{}'::uuid[],
+  skill_names ARRAY DEFAULT '{}'::text[],
+  has_certificate boolean DEFAULT false,
+  certificate_cost text DEFAULT 'free'::text,
+  language ARRAY DEFAULT '{English}'::text[],
+  is_free boolean DEFAULT true,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT free_courses_pkey PRIMARY KEY (id),
+  CONSTRAINT free_courses_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.resource_providers(id)
+);
+CREATE TABLE public.free_certificates (
+  name text NOT NULL,
+  issuing_organization text NOT NULL,
+  description text,
+  exam_cost text,
+  validity_period interval,
+  application_url text,
+  info_url text,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  skills_verified ARRAY DEFAULT '{}'::uuid[],
+  exam_required boolean DEFAULT false,
+  is_globally_recognized boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT free_certificates_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.user_saved_courses (
+  user_id uuid NOT NULL,
+  course_id uuid,
+  completed_at timestamp with time zone,
+  notes text,
+  rating integer CHECK (rating >= 1 AND rating <= 5),
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  saved_at timestamp with time zone DEFAULT now(),
+  completed boolean DEFAULT false,
+  CONSTRAINT user_saved_courses_pkey PRIMARY KEY (id),
+  CONSTRAINT user_saved_courses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT user_saved_courses_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.free_courses(id)
+);
+CREATE TABLE public.user_certificates (
+  user_id uuid NOT NULL,
+  certificate_id uuid,
+  course_id uuid,
+  certificate_url text,
+  verification_code text,
+  expiry_date timestamp with time zone,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  earned_date timestamp with time zone DEFAULT now(),
+  is_verified boolean DEFAULT false,
+  CONSTRAINT user_certificates_pkey PRIMARY KEY (id),
+  CONSTRAINT user_certificates_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT user_certificates_certificate_id_fkey FOREIGN KEY (certificate_id) REFERENCES public.free_certificates(id),
+  CONSTRAINT user_certificates_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.free_courses(id)
+);
+CREATE TABLE public.learning_paths (
+  title text NOT NULL,
+  description text,
+  career_id uuid,
+  estimated_duration text,
+  difficulty text,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  courses ARRAY DEFAULT '{}'::uuid[],
+  certificates ARRAY DEFAULT '{}'::uuid[],
+  created_by text DEFAULT 'SkillFind AI'::text,
+  is_official boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT learning_paths_pkey PRIMARY KEY (id),
+  CONSTRAINT learning_paths_career_id_fkey FOREIGN KEY (career_id) REFERENCES public.career_pathways(id)
+);
+CREATE TABLE public.user_learning_paths (
+  user_id uuid NOT NULL,
+  path_id uuid NOT NULL,
+  completed_at timestamp with time zone,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  current_step integer DEFAULT 0,
+  completed_steps ARRAY DEFAULT '{}'::integer[],
+  started_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_learning_paths_pkey PRIMARY KEY (id),
+  CONSTRAINT user_learning_paths_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT user_learning_paths_path_id_fkey FOREIGN KEY (path_id) REFERENCES public.learning_paths(id)
+);
+CREATE TABLE public.skill_assessments (
+  student_id uuid NOT NULL,
+  skill_id uuid NOT NULL,
+  assessment_type text CHECK (assessment_type = ANY (ARRAY['quiz'::text, 'project'::text, 'self_assessment'::text])),
+  score integer CHECK (score >= 0 AND score <= 100),
+  passed boolean,
+  expires_at timestamp with time zone,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  assessed_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT skill_assessments_pkey PRIMARY KEY (id),
+  CONSTRAINT skill_assessments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT skill_assessments_skill_id_fkey FOREIGN KEY (skill_id) REFERENCES public.skills_taxonomy(id)
+);
+CREATE TABLE public.question_patterns (
+  course_id uuid NOT NULL,
+  module_id uuid,
+  chapter_id uuid,
+  pattern_type text CHECK (pattern_type = ANY (ARRAY['frequent_topic'::text, 'question_style'::text, 'difficulty_distribution'::text, 'common_mistake'::text])),
+  pattern_data jsonb NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  confidence_score double precision DEFAULT 0,
+  times_identified integer DEFAULT 1,
+  last_updated timestamp with time zone DEFAULT now(),
+  CONSTRAINT question_patterns_pkey PRIMARY KEY (id),
+  CONSTRAINT question_patterns_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id),
+  CONSTRAINT question_patterns_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id),
+  CONSTRAINT question_patterns_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.ai_training_data (
+  question_id uuid,
+  question_text text NOT NULL,
+  answer_text text NOT NULL,
+  context_text text,
+  metadata jsonb,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone DEFAULT now(),
+  embedding USER-DEFINED,
+  source_type text CHECK (source_type = ANY (ARRAY['exam'::text, 'chat'::text, 'user_feedback'::text])),
+  quality_score double precision DEFAULT 0,
+  CONSTRAINT ai_training_data_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.exams (
+  course_id uuid NOT NULL,
+  module_id uuid,
+  title text NOT NULL,
+  description text,
+  exam_type text NOT NULL CHECK (exam_type = ANY (ARRAY['previous_exam'::text, 'practice_test'::text, 'mock_exam'::text, 'quiz'::text])),
+  year integer,
+  term text,
+  duration_minutes integer,
+  total_marks integer,
+  file_url text,
+  file_name text,
+  file_size integer,
+  answer_file_url text,
+  created_by uuid,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  answers_available boolean DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  extraction_method text,
+  processed_at timestamp with time zone,
+  CONSTRAINT exams_pkey PRIMARY KEY (id),
+  CONSTRAINT exams_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT exams_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id),
+  CONSTRAINT exams_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id)
+);
+CREATE TABLE public.exam_question_bank (
+  exam_id uuid NOT NULL,
+  course_id uuid NOT NULL,
+  module_id uuid,
+  chapter_id uuid,
+  question_text text NOT NULL,
+  question_type text CHECK (question_type = ANY (ARRAY['multiple_choice'::text, 'true_false'::text, 'missing_word'::text, 'term_definition'::text, 'long_question'::text, 'short_question'::text, 'essay'::text, 'practical'::text, 'calculation'::text])),
+  options jsonb,
+  correct_answer text,
+  explanation text,
+  marks integer,
+  difficulty_level text CHECK (difficulty_level = ANY (ARRAY['easy'::text, 'medium'::text, 'hard'::text, 'expert'::text])),
+  bloom_taxonomy_level text,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  times_used_for_quiz integer DEFAULT 0,
+  times_predicted integer DEFAULT 0,
+  accuracy_when_predicted double precision DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  keywords ARRAY,
+  concepts ARRAY,
+  topic_tags ARRAY,
+  CONSTRAINT exam_question_bank_pkey PRIMARY KEY (id),
+  CONSTRAINT exam_question_bank_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id),
+  CONSTRAINT exam_question_bank_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id),
+  CONSTRAINT exam_question_bank_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id),
+  CONSTRAINT exam_question_bank_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES public.exams(id)
+);
+CREATE TABLE public.flashcard_progress (
+  student_id uuid NOT NULL,
+  chapter_id uuid NOT NULL,
+  card_id text NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  known boolean NOT NULL DEFAULT false,
+  reviewed_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT flashcard_progress_pkey PRIMARY KEY (id),
+  CONSTRAINT flashcard_progress_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT flashcard_progress_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.study_progress (
+  user_id uuid NOT NULL,
+  chapter_id uuid NOT NULL,
+  notes text,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  completed boolean DEFAULT false,
+  time_spent integer DEFAULT 0,
+  last_studied timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT study_progress_pkey PRIMARY KEY (id),
+  CONSTRAINT study_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT study_progress_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.predicted_exams (
+  module_id uuid NOT NULL,
+  student_id uuid NOT NULL,
+  exam_title text NOT NULL,
+  exam_type text NOT NULL,
+  total_marks integer NOT NULL,
+  duration_minutes integer NOT NULL,
+  instructions text,
+  exam_structure jsonb NOT NULL,
+  exam_date date,
+  intensity text,
+  selected_chapters ARRAY,
+  accuracy_score double precision,
+  feedback_rating integer CHECK (feedback_rating >= 1 AND feedback_rating <= 5),
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  generated_at timestamp with time zone DEFAULT now(),
+  is_printed boolean DEFAULT false,
+  times_viewed integer DEFAULT 0,
+  CONSTRAINT predicted_exams_pkey PRIMARY KEY (id),
+  CONSTRAINT predicted_exams_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT predicted_exams_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.predicted_exam_questions (
+  predicted_exam_id uuid NOT NULL,
+  section_id text,
+  question_number integer NOT NULL,
+  question_type text NOT NULL,
+  question_text text NOT NULL,
+  options jsonb,
+  correct_answer text,
+  marks integer NOT NULL,
+  difficulty_level text,
+  bloom_level text,
+  topic_tags ARRAY,
+  chapter_id uuid,
+  matching_pairs jsonb,
+  word_bank ARRAY,
+  explanation text,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  ai_generated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT predicted_exam_questions_pkey PRIMARY KEY (id),
+  CONSTRAINT predicted_exam_questions_exam_id_fkey FOREIGN KEY (predicted_exam_id) REFERENCES public.predicted_exams(id),
+  CONSTRAINT predicted_exam_questions_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.exam_pattern_analysis (
+  module_id uuid NOT NULL UNIQUE,
+  total_papers_analyzed integer NOT NULL,
+  question_type_distribution jsonb NOT NULL,
+  section_structure jsonb,
+  average_total_marks integer,
+  average_duration integer,
+  difficulty_distribution jsonb,
+  bloom_distribution jsonb,
+  topic_frequency jsonb,
+  marking_patterns jsonb,
+  common_instructions text,
+  last_used_for_generation timestamp with time zone,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  analyzed_at timestamp with time zone DEFAULT now(),
+  version integer DEFAULT 1,
+  CONSTRAINT exam_pattern_analysis_pkey PRIMARY KEY (id),
+  CONSTRAINT exam_pattern_analysis_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.module_guides (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  file_path text,
+  file_name text,
+  file_mime_type text,
+  file_size_bytes bigint CHECK (file_size_bytes IS NULL OR file_size_bytes >= 0),
+  created_by uuid,
+  updated_by uuid,
+  version integer NOT NULL DEFAULT 1 CHECK (version > 0),
+  is_published boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  module_id uuid NOT NULL UNIQUE,
+  title text NOT NULL,
+  description text,
+  guide_text text,
+  file_url text,
+  CONSTRAINT module_guides_pkey PRIMARY KEY (id),
+  CONSTRAINT module_guides_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT module_guides_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id),
+  CONSTRAINT module_guides_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id)
+);
+CREATE TABLE public.game_scores (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  score integer NOT NULL DEFAULT 0 CHECK (score >= 0),
+  student_id uuid NOT NULL,
+  chapter_id uuid NOT NULL,
+  accuracy double precision NOT NULL DEFAULT 0 CHECK (accuracy >= 0::double precision AND accuracy <= 100::double precision),
+  time_taken integer NOT NULL DEFAULT 0 CHECK (time_taken >= 0),
+  xp_earned integer NOT NULL DEFAULT 0 CHECK (xp_earned >= 0),
+  level_reached integer NOT NULL DEFAULT 1 CHECK (level_reached >= 1),
+  game_mode text NOT NULL DEFAULT 'standard'::text CHECK (game_mode = ANY (ARRAY['standard'::text, 'boss'::text])),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT game_scores_pkey PRIMARY KEY (id),
+  CONSTRAINT game_scores_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id),
+  CONSTRAINT game_scores_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id)
+);
+CREATE TABLE public.student_skill_xp (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  xp integer NOT NULL DEFAULT 0 CHECK (xp >= 0),
+  student_id uuid NOT NULL,
+  skill_name text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT student_skill_xp_pkey PRIMARY KEY (id),
+  CONSTRAINT student_skill_xp_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.student_badges (
+  student_id uuid NOT NULL,
+  badge_code text NOT NULL,
+  badge_name text NOT NULL,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  earned_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT student_badges_pkey PRIMARY KEY (id),
+  CONSTRAINT student_badges_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.study_question_bank (
+  course_id uuid,
+  module_id uuid NOT NULL,
+  chapter_id uuid,
+  exam_id uuid,
+  question_type USER-DEFINED NOT NULL,
+  question_text text NOT NULL,
+  correct_answer text NOT NULL,
+  explanation text,
+  missing_word text,
+  term text,
+  definition text,
+  bloom_level text,
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  source USER-DEFINED NOT NULL DEFAULT 'chapter_generated'::study_question_source,
+  options jsonb NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(options) = 'array'::text),
+  marks integer NOT NULL DEFAULT 1 CHECK (marks > 0),
+  created_by uuid,
+  times_used integer NOT NULL DEFAULT 0 CHECK (times_used >= 0),
+  times_answered integer NOT NULL DEFAULT 0 CHECK (times_answered >= 0),
+  difficulty_level text NOT NULL DEFAULT 'medium'::text CHECK (difficulty_level = ANY (ARRAY['easy'::text, 'medium'::text, 'hard'::text, 'expert'::text])),
+  topic_tags ARRAY NOT NULL DEFAULT '{}'::text[],
+  keywords ARRAY NOT NULL DEFAULT '{}'::text[],
+  quality_score numeric NOT NULL DEFAULT 0 CHECK (quality_score >= 0::numeric AND quality_score <= 1::numeric),
+  ai_confidence numeric NOT NULL DEFAULT 0 CHECK (ai_confidence >= 0::numeric AND ai_confidence <= 1::numeric),
+  times_correct integer NOT NULL DEFAULT 0 CHECK (times_correct >= 0),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT study_question_bank_pkey PRIMARY KEY (id),
+  CONSTRAINT study_question_bank_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id),
+  CONSTRAINT study_question_bank_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.modules(id),
+  CONSTRAINT study_question_bank_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES public.chapters(id),
+  CONSTRAINT study_question_bank_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES public.exams(id),
+  CONSTRAINT study_question_bank_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+);

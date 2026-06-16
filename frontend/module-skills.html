@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkillFind AI - Module Skills</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="module-skills.css" />
+</head>
+<body>
+  <div class="skills-app">
+    <aside class="skills-sidebar">
+      <div class="skills-brand">
+        <img class="skills-logo" src="../assets/logo.png" alt="SkillFind AI logo" />
+        <div>
+          <h1>SkillFind AI</h1>
+          <p>Module Skills</p>
+        </div>
+      </div>
+
+      <div class="skills-nav">
+        <a href="index.html" class="skills-nav-item">Study</a>
+        <a href="module-skills.html" class="skills-nav-item active">Skills</a>
+      </div>
+
+      <div class="skills-user">
+        <div id="userName">Student</div>
+        <button id="btnSignOut" class="btn ghost" type="button">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="skills-main">
+      <header class="skills-header">
+        <div>
+          <p class="eyebrow">Student module guides</p>
+          <h2>Skills you gain from selected modules</h2>
+        </div>
+        <button id="btnAnalyzeSkills" class="btn" type="button">Generate skills</button>
+      </header>
+
+      <section id="statusPanel" class="skills-status">
+        Check one or more modules, then generate skills from their published module guides.
+      </section>
+
+      <section class="module-picker">
+        <div class="module-picker-head">
+          <h3>Your modules</h3>
+          <button id="btnSelectAll" class="btn ghost" type="button">Select all</button>
+        </div>
+        <div id="moduleChecklist" class="module-checklist"></div>
+      </section>
+
+      <section id="moduleSummary" class="module-summary hidden">
+        <div>
+          <p id="courseName" class="course-name"></p>
+          <h3 id="moduleName">Selected module skills</h3>
+          <p id="summaryText"></p>
+        </div>
+        <a id="guideLink" class="btn ghost hidden" href="#" target="_blank" rel="noreferrer">Open guide PDF</a>
+      </section>
+
+      <section id="skillsGrid" class="skills-grid"></section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="module-skills.js"></script>
+</body>
+</html>

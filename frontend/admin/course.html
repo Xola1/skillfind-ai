@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes Tutor - Admin Courses</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body data-admin-page="courses">
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="../../assets/logo.png" alt="SkillFind AI logo" />
+      <div>
+        <div class="title">Notes Tutor</div>
+        <div class="subtitle">Admin Courses</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <div id="whoami" class="whoami">Not signed in</div>
+      <button id="btnSignOut" class="btn ghost" type="button" disabled>Sign out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- AUTH CARD -->
+  
+
+    <!-- APP -->
+    <section id="appCard" class="card">
+     <div class="tabs">
+  <button class="tab active" data-tab="courses">Courses</button>
+  <button class="tab" data-tab="modules">Modules</button>
+  <button class="tab" data-tab="moduleGuides">Module Guides</button>
+  <button class="tab" data-tab="exams">Exams & Tests</button>
+  <button class="tab" data-tab="requests">Enrollment Requests</button>
+  <button class="tab" data-tab="chapters">Chapters</button>
+  <button class="tab" data-tab="students">Students</button>
+</div>
+
+      <!-- COURSES -->
+      <div class="panel" id="panel-courses">
+        <div class="panelHeader">
+          <h2>Courses</h2>
+          <button id="btnReloadCourses" class="btn ghost" type="button">Reload</button>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Course Code</label>
+            <input id="courseCode" placeholder="e.g. IT" />
+          </div>
+          <div class="field">
+            <label>Course Name</label>
+            <input id="courseName" placeholder="e.g. Information Technology" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="btnCreateCourse" class="btn primary" type="button">Create Course</button>
+          <div id="coursesStatus" class="status"></div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="table" id="coursesTable">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Created</th>
+                <th class="right">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DEBUG -->
+      <div class="debugBox">
+        <div class="debugHeader">
+          <div>Debug</div>
+          <button id="btnClearDebug" class="btn ghost" type="button">Clear</button>
+        </div>
+        <pre id="debug" class="debug"></pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- Supabase JS (CDN) -->
+ <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="admin.js"></script>
+
+  
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillFind AI - Student Login</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #0b1220 0%, #1a1f2e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .admin-login-link {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .admin-login-link:hover {
+      transform: translateY(-1px);
+      border-color: rgba(166, 255, 218, 0.38);
+      background: rgba(166, 255, 218, 0.1);
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .logo {
+      display: block;
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
+      margin: 0 auto 20px;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #8ab4ff;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    input[readonly] {
+      cursor: default;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #8ab4ff, #a6ffda);
+      border: none;
+      border-radius: 12px;
+      color: #0b1220;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(138, 180, 255, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(255, 70, 70, 0.1);
+      border: 1px solid rgba(255, 70, 70, 0.3);
+      color: #ff6b6b;
+    }
+
+    .message.success {
+      display: block;
+      background: rgba(70, 255, 70, 0.1);
+      border: 1px solid rgba(70, 255, 70, 0.3);
+      color: #a6ffda;
+    }
+
+    .message.info {
+      display: block;
+      background: rgba(138, 180, 255, 0.1);
+      border: 1px solid rgba(138, 180, 255, 0.3);
+      color: #8ab4ff;
+    }
+
+    .message.warning {
+      display: block;
+      background: rgba(255, 209, 102, 0.12);
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      color: #ffd166;
+      line-height: 1.45;
+    }
+
+    .hidden-autofill-fields {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <a class="admin-login-link" href="frontend/admin/adminlogin.html">Login As Admin</a>
+
+  <div class="login-container">
+    <img class="logo" src="assets/logo.png" alt="SkillFind AI logo" />
+
+    <h1>SkillFind AI</h1>
+    <p class="subtitle">Student sign in only</p>
+
+    <form id="loginForm" autocomplete="off" novalidate>
+      <!-- Dummy fields to reduce browser autofill -->
+      <div class="hidden-autofill-fields">
+        <input type="text" name="fake_username" autocomplete="username" />
+        <input type="password" name="fake_password" autocomplete="current-password" />
+      </div>
+
+      <div class="input-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="skillfind_student_email_manual"
+          placeholder="student@example.com"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          readonly
+          required
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="skillfind_student_password_manual"
+          placeholder="Password"
+          autocomplete="new-password"
+          readonly
+          required
+        />
+      </div>
+
+      <button id="loginBtn" type="submit">Sign In</button>
+    </form>
+
+    <div id="message" class="message"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
+  <script>
+    const loginForm = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const messageDiv = document.getElementById("message");
+
+    const DEMO_EMAIL = "Mandilakhe@gmail.com";
+    const DEMO_PASSWORD = "qwertyuiop";
+    const SERVER_OFFLINE_MESSAGE =
+      "Prototype server is offline. Please contact Xola Mcanjana (Team Leader / Project Manager) via call or WhatsApp at 0790353664, or email ayazingcaxola@gmail.com / 221657770@mywsu.ac.za to start the server and continue reviewing the prototype.";
+
+    let supabaseClient = null;
+
+    function showMessage(text, type) {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+    }
+
+    function clearMessage() {
+      messageDiv.textContent = "";
+      messageDiv.className = "message";
+    }
+
+    function setLoading(isLoading) {
+      loginBtn.disabled = isLoading;
+      loginBtn.textContent = isLoading ? "Signing in..." : "Sign In";
+    }
+
+    function fillDemoLoginFields() {
+      emailInput.value = DEMO_EMAIL;
+      passwordInput.value = DEMO_PASSWORD;
+    }
+
+    async function checkPrototypeServer() {
+      const apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || "http://localhost:5050";
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 3500);
+
+      try {
+        const response = await fetch(`${apiBase}/health`, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+      } catch (error) {
+        console.warn("Prototype server health check failed:", error);
+        showMessage(SERVER_OFFLINE_MESSAGE, "warning");
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    }
+
+    function initializeSupabase() {
+      if (!window.supabase || !window.supabase.createClient) {
+        throw new Error("Supabase client did not load.");
+      }
+
+      if (!window.APP_CONFIG) {
+        throw new Error("APP_CONFIG is missing. Check config.js.");
+      }
+
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
+
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error("Supabase URL or anon key is missing in config.js.");
+      }
+
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+    }
+
+    function getLoginErrorMessage(error) {
+      const message = error && error.message ? error.message : "";
+      const lowerMessage = message.toLowerCase();
+
+      if (message.includes("Invalid login credentials")) {
+        return "Invalid email or password. Please try again.";
+      }
+
+      if (message.includes("Email not confirmed")) {
+        return "Please verify your email address before logging in.";
+      }
+
+      if (lowerMessage.includes("network") || lowerMessage.includes("fetch")) {
+        return "Network error. Please check your internet connection.";
+      }
+
+      return message ? `Login failed. ${message}` : "Login failed. Please try again.";
+    }
+
+    async function getUserProfile(userId) {
+      const { data, error } = await supabaseClient
+        .from("profiles")
+        .select("id, role, full_name, course_id")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        throw new Error("Profile not found. Please contact the administrator.");
+      }
+
+      return data;
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      clearMessage();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage("Please enter both email and password.", "error");
+        return;
+      }
+
+      if (!supabaseClient) {
+        showMessage("Login system is not ready. Please refresh the page.", "error");
+        return;
+      }
+
+      setLoading(true);
+      showMessage("Authenticating...", "info");
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data || !data.user) {
+          throw new Error("Login failed. Please try again.");
+        }
+
+        const profile = await getUserProfile(data.user.id);
+
+        if (!profile || profile.role !== "student") {
+          await supabaseClient.auth.signOut();
+          localStorage.removeItem("skillfind_user");
+          showMessage("Access denied. Only student accounts can log in here.", "error");
+          setLoading(false);
+          return;
+        }
+
+        localStorage.setItem(
+          "skillfind_user",
+          JSON.stringify({
+            id: data.user.id,
+            email: data.user.email,
+            role: profile.role,
+            full_name: profile.full_name || "",
+            course_id: profile.course_id || null
+          })
+        );
+
+        showMessage("Login successful! Redirecting...", "success");
+
+        window.location.href = "index.html";
+
+      } catch (error) {
+        console.error("Login error:", error);
+
+        await supabaseClient.auth.signOut();
+        localStorage.removeItem("skillfind_user");
+
+        showMessage(getLoginErrorMessage(error), "error");
+        setLoading(false);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      try {
+        initializeSupabase();
+
+        fillDemoLoginFields();
+        checkPrototypeServer();
+
+        loginForm.addEventListener("submit", handleLogin);
+
+      } catch (error) {
+        console.error("Login setup error:", error);
+        showMessage(error.message, "error");
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

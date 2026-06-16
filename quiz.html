@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>SkillFind AI — Quiz</title><style>
+    :root{
+      --bg:#07111f; --panel:#0f1b2e; --panel2:#13233b; --text:#f4f7fb; --muted:#95a3b8;
+      --line:rgba(255,255,255,.10); --brand:#8ab4ff; --brand2:#a6ffda; --danger:#ff7a7a;
+      --warn:#ffd166; --shadow:0 18px 50px rgba(0,0,0,.35); --radius:22px;
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(circle at top left,#183766 0,#07111f 38%,#050913 100%);color:var(--text);min-height:100vh}
+    button,input,select{font:inherit}.hidden{display:none!important}.app{display:grid;grid-template-columns:310px 1fr;min-height:100vh}.sidebar{background:rgba(8,16,30,.86);backdrop-filter:blur(18px);border-right:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:16px}.sbTop{display:flex;align-items:center;justify-content:space-between;gap:12px}.sbBrand{display:flex;align-items:center;gap:12px}.sbLogo{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),var(--brand2));font-size:22px}.sbTitle{font-weight:800;font-size:18px}.sbSub{color:var(--muted);font-size:12px}.iconBtn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:12px;padding:9px 12px;cursor:pointer}.sbSection{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.04);padding:14px}.sbSectionTitle{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.08em;margin-bottom:10px}.sbAccount{display:flex;gap:10px;align-items:center;justify-content:space-between}.whoami{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis}.btn{border:0;border-radius:14px;padding:10px 14px;cursor:pointer;font-weight:700}.btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#07111f}.btn.ghost{background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--line)}.btn:disabled{opacity:.55;cursor:not-allowed}.tree{display:flex;flex-direction:column;gap:8px}.treeHead,.treeChildBtn,.study-mode-item{width:100%;text-align:left;border:1px solid transparent;background:rgba(255,255,255,.04);color:var(--text);border-radius:14px;padding:10px 12px;cursor:pointer}.treeHead.active,.treeChildBtn.active,.study-mode-item:hover{border-color:rgba(138,180,255,.45);background:rgba(138,180,255,.13)}.treeChildBtn{margin:6px 0 0 18px;width:calc(100% - 18px);font-size:13px;color:#dce7f8}.treeEmpty,.hint{font-size:13px;color:var(--muted);line-height:1.5}.study-mode-list{display:grid;gap:8px}.study-mode-item{display:flex;gap:10px;align-items:center}.sbFooter{margin-top:auto}.main{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.topbar{min-height:72px;display:flex;align-items:center;gap:14px;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);background:rgba(7,17,31,.62);backdrop-filter:blur(16px)}.learning-context{display:flex;flex-direction:column;gap:3px;margin-right:auto}.context-module{font-weight:800}.context-chapter{font-size:13px;color:var(--muted)}.action-buttons{display:flex;gap:8px;flex-wrap:wrap}.action-btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:14px;padding:9px 12px;cursor:pointer;display:flex;gap:8px;align-items:center}.action-btn:hover{border-color:rgba(166,255,218,.45);background:rgba(166,255,218,.10)}.chat{overflow:auto;padding:24px}.step-flow,.learning-interface,.tool-shell{max-width:1120px;margin:0 auto}.step-title{font-size:28px;font-weight:900;margin:12px 0 22px}.modules-grid,.chapters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}.module-card,.chapter-card,.panel,.prediction-card,.stat-card{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}.module-card,.chapter-card{cursor:pointer;transition:.18s transform,.18s border-color}.module-card:hover,.chapter-card:hover{transform:translateY(-3px);border-color:rgba(138,180,255,.5)}.module-icon{font-size:34px;margin-bottom:12px}.module-name,.chapter-title{font-size:18px;font-weight:850}.course-name,.chapter-number{font-size:13px;color:var(--muted);margin-top:8px}.back-button{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.08);color:var(--text);padding:10px 13px;cursor:pointer;margin-bottom:16px}.empty{text-align:center;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:26px;padding:48px 24px}.emptyIcon{font-size:54px}.emptyTitle{font-size:30px;font-weight:900;margin-top:8px}.emptySub{color:var(--muted);max-width:640px;margin:10px auto 22px;line-height:1.6}.quickGrid{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.chip{border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--text);border-radius:999px;padding:10px 14px;cursor:pointer}.chip:hover{background:rgba(138,180,255,.15)}.composerWrap{border-top:1px solid var(--line);background:rgba(7,17,31,.82);padding:12px 20px}.composer{display:flex;gap:10px}.composerInput{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:16px;padding:13px 14px}.statusLine{min-height:18px;color:var(--muted);font-size:12px;margin-bottom:6px}.messages{display:flex;flex-direction:column;gap:14px}.msg{display:flex;gap:10px;align-items:flex-start}.msg.user{justify-content:flex-end}.msg.user .avatar{order:2}.avatar{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:rgba(138,180,255,.18);font-size:12px;font-weight:900}.bubble{max-width:760px;border:1px solid var(--line);background:rgba(255,255,255,.07);padding:14px 16px;border-radius:18px;line-height:1.55}.bubble.ai{background:rgba(166,255,218,.07)}.debug{margin-top:8px;color:var(--muted)}.output{white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.25);padding:10px;border-radius:12px}.page{max-width:980px;margin:0 auto;padding:24px}.tool-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px}.tool-title{font-size:32px;font-weight:950;margin:0}.tool-sub{color:var(--muted);margin-top:6px}.settings{display:grid;gap:14px}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.04)}select{background:#0b1728;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.mode-buttons,.filter-buttons,.topic-pills{display:flex;gap:8px;flex-wrap:wrap}.mode-btn,.filter-pill,.topic-pill,.restart-btn,.nav-btn,.start-btn,.flashcard-btn{border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--text);border-radius:14px;padding:10px 13px;cursor:pointer;font-weight:750}.mode-btn.active,.filter-pill.active,.topic-pill.active,.start-btn{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#07111f;border-color:transparent}.loading-spinner{text-align:center;padding:44px}.spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.15);border-top-color:var(--brand2);border-radius:50%;margin:0 auto 14px;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.progress-bar{height:10px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(135deg,var(--brand),var(--brand2))}.question-counter{color:var(--muted);font-size:13px;margin:14px 0}.question-text{font-size:22px;font-weight:850;margin:16px 0}.options-list{display:grid;gap:10px}.option-item{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:13px;cursor:pointer;background:rgba(255,255,255,.05)}.option-item.selected{border-color:var(--brand);background:rgba(138,180,255,.14)}.option-item.correct{border-color:var(--brand2);background:rgba(166,255,218,.14)}.option-item.wrong{border-color:var(--danger);background:rgba(255,122,122,.14)}.option-letter{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.10);display:grid;place-items:center;font-weight:900}.explanation{margin-top:14px;border-left:4px solid var(--brand2);background:rgba(166,255,218,.08);padding:12px;border-radius:12px}.quiz-nav,.flashcard-actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}.score-circle{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;border:10px solid rgba(166,255,218,.35)}.score-number{font-size:28px;font-weight:950;text-align:center}.score-label{text-align:center;color:var(--muted)}.results-area{text-align:center}.results-stats{max-width:420px;margin:18px auto;display:grid;gap:8px}.stat-row{display:flex;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.04)}.flashcard-container{perspective:1000px;margin:22px 0}.flashcard{position:relative;min-height:280px;transform-style:preserve-3d;transition:transform .5s;cursor:pointer}.flashcard.flipped{transform:rotateY(180deg)}.flashcard-front,.flashcard-back{position:absolute;inset:0;border:1px solid var(--line);border-radius:24px;background:linear-gradient(135deg,rgba(138,180,255,.14),rgba(166,255,218,.08));display:grid;place-items:center;text-align:center;padding:24px;backface-visibility:hidden}.flashcard-back{transform:rotateY(180deg)}.flashcard-label{color:var(--muted);font-size:13px}.flashcard-content{font-size:24px;font-weight:900;line-height:1.35}.flashcard-hint{color:var(--muted);font-size:12px}.study-guide-content{line-height:1.7}.study-guide-content h1,.study-guide-content h2,.study-guide-content h3{color:#fff}.predictor-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}.stat-card{display:flex;gap:12px;align-items:center}.stat-icon{font-size:30px}.stat-value{font-size:24px;font-weight:950}.stat-label{color:var(--muted);font-size:13px}.section-title{font-size:18px;font-weight:900;margin:18px 0 12px}.prediction-card{margin-bottom:12px}.prediction-header{display:flex;justify-content:space-between;gap:12px;align-items:center}.prediction-number{font-weight:950;color:var(--brand2)}.prediction-badges{display:flex;gap:8px;flex-wrap:wrap}.type-badge,.confidence-badge,.topic-tag,.difficulty-badge{font-size:11px;border-radius:999px;padding:4px 8px;background:rgba(255,255,255,.08)}.prediction-question{font-size:18px;font-weight:850;margin:12px 0}.prediction-reason{color:var(--muted);font-size:13px}.prediction-topics{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.error-box{border:1px solid rgba(255,122,122,.4);background:rgba(255,122,122,.10);border-radius:18px;padding:18px;color:#ffd3d3}.success-box{border:1px solid rgba(166,255,218,.35);background:rgba(166,255,218,.08);border-radius:18px;padding:18px}.top-only{min-height:100vh}.top-only .topbar{position:sticky;top:0;z-index:5}.analysis-summary{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:16px;padding:14px;margin-bottom:16px}.no-results{text-align:center;color:var(--muted);padding:26px}.nav-btn.submit,.restart-btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#07111f;border-color:transparent}@media(max-width:860px){.app{grid-template-columns:1fr}.sidebar{position:fixed;z-index:20;inset:0 auto 0 0;width:310px;transform:translateX(-110%);transition:.2s}.sidebar.open{transform:translateX(0)}.topbar{align-items:flex-start;flex-wrap:wrap}.action-buttons{width:100%}.chat{padding:16px}.composer{flex-direction:column}.tool-header{align-items:flex-start;flex-direction:column}.setting-row{align-items:flex-start;flex-direction:column}.prediction-header{align-items:flex-start;flex-direction:column}}
+@media(max-width:640px){html,body{width:100%;overflow-x:hidden}.top-only{min-height:100dvh}.topbar{min-height:auto;align-items:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;flex-wrap:wrap}.topbar .btn.ghost{width:100%;justify-content:center}.learning-context{width:100%;min-width:0;margin:0}.context-module,.context-chapter{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.page{width:100%;padding:16px 12px calc(18px + env(safe-area-inset-bottom));overflow:hidden}.tool-header{gap:12px;margin-bottom:14px}.tool-title{font-size:24px;line-height:1.1}.tool-sub{font-size:13px;line-height:1.45}.panel,.prediction-card,.stat-card{border-radius:16px;padding:14px;box-shadow:none}.settings{gap:10px}.setting-row{padding:12px;gap:10px}.setting-row select,.start-btn,.restart-btn,.nav-btn,.flashcard-btn,.mode-btn,.filter-pill,.topic-pill{width:100%;min-height:44px;white-space:normal}.mode-buttons,.filter-buttons,.topic-pills,.quiz-nav,.flashcard-actions{display:grid;grid-template-columns:1fr;gap:8px}.loading-spinner{padding:28px 10px}.question-text{font-size:18px;line-height:1.35}.option-item{align-items:flex-start;padding:12px}.option-letter{flex:0 0 32px}.bubble{max-width:calc(100vw - 48px);overflow-wrap:anywhere}.score-circle{width:128px;height:128px;border-width:8px}.results-stats{max-width:100%}.stat-row{gap:10px}.stat-row span:last-child{text-align:right}.review-section{max-height:none!important}.prediction-header,.tool-header,.setting-row{flex-direction:column;align-items:stretch}.prediction-badges{gap:6px}.prediction-question{font-size:16px;line-height:1.4}.predictor-stats{grid-template-columns:1fr}.flashcard{min-height:320px}.flashcard-front,.flashcard-back{padding:18px}.flashcard-content{font-size:20px;overflow-wrap:anywhere}.study-guide-content{overflow-wrap:anywhere}.study-guide-content pre{white-space:pre-wrap;overflow-x:auto}.study-guide-content img,.study-guide-content table{max-width:100%;display:block;overflow-x:auto}}</style></head>
+<body class="top-only">
+  <header class="topbar"><button class="btn ghost" onclick="goBackToLearning()">← Back to Learning</button><div class="learning-context" style="display:flex"><div class="context-module">📝 Quiz Mode</div><div class="context-chapter" id="contextLine">Loading...</div></div></header>
+  <main class="page"><div class="tool-header"><div><h1 class="tool-title">Quiz Mode</h1><div class="tool-sub">Generate practice or exam-style questions for the selected chapter.</div></div></div><section class="panel" id="toolBody"></section></main>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="frontend/config.js"></script>
+<script>
+    const API_BASE = "http://localhost:5050";
+    const STORAGE_CONTEXT_KEY = "skillfind:selectedContext";
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const el = (id) => document.getElementById(id);
+    
+    function escapeHtml(str){ return String(str || "").replace(/[&<>]/g, m => m === "&" ? "&amp;" : m === "<" , "&gt;"); }
+    
+    function getSavedContext(){
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_CONTEXT_KEY) || "{}"); } catch { saved = {}; }
+      const p = new URLSearchParams(window.location.search);
+      return {
+        moduleId: p.get("moduleId") || saved.moduleId || "",
+        moduleName: p.get("moduleName") || saved.moduleName || "Module",
+        chapterId: p.get("chapterId") || saved.chapterId || "",
+        chapterTitle: p.get("chapterTitle") || saved.chapterTitle || "Chapter",
+        chapterNumber: p.get("chapterNumber") || saved.chapterNumber || "",
+        chapterIds: p.get("chapterIds") || saved.chapterIds || "",
+        source: p.get("source") || saved.source || ""
+      };
+    }
+    
+    async function getToken(){ 
+      const { data } = await sb.auth.getSession(); 
+      return data?.session?.access_token || localStorage.getItem("supabase_token") || ""; 
+    }
+
+    function formatTime(seconds){
+      const total = Number(seconds) || 0;
+      return `${Math.floor(total / 60)}m ${total % 60}s`;
+    }
+
+    async function loadActivityLeaderboard(activityType, containerId){
+      const container = el(containerId);
+      if (!container || !ctx.chapterId) return;
+      try {
+        const token = await getToken();
+        const response = await fetch(`${API_BASE}/activity/leaderboard?activityType=${encodeURIComponent(activityType)}&chapterId=${encodeURIComponent(ctx.chapterId)}&limit=8`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        const rows = data.leaderboard || [];
+        container.innerHTML = rows.length ? rows.map(row => `
+          <div class="stat-row">
+            <span>#${row.rank} ${escapeHtml(row.student_name)}</span>
+            <span>${row.score}/${(row.correct_count || 0) + (row.incorrect_count || 0) || row.score} (${Math.round(row.accuracy || 0)}%)</span>
+          </div>
+        `).join("") : `<div class="hint">No quiz leaderboard scores yet.</div>`;
+      } catch (error) {
+        console.warn("Could not load quiz leaderboard:", error);
+        container.innerHTML = `<div class="hint">Leaderboard unavailable.</div>`;
+      }
+    }
+    
+    async function requireAuth(){
+      const { data } = await sb.auth.getSession();
+      if (!data?.session) { 
+        window.location.href = "login.html"; 
+        return false; 
+      }
+      localStorage.setItem("supabase_token", data.session.access_token);
+      return true;
+    }
+    
+    function contextLabel(ctx){ return `${ctx.moduleName} ${ctx.chapterNumber ? `Chapter ${ctx.chapterNumber}: ` : ""}${ctx.chapterTitle}`.trim(); }
+    
+    function showMissingContext(){
+      el("toolBody").innerHTML = `<div class="error-box"><strong>No chapter selected.</strong><br/>Go back to the main learning page, select a module and chapter, then open this tool again.</div>`;
+    }
+    
+    function goBackToLearning(){
+      try { localStorage.setItem("skillfind:selectedContext", JSON.stringify(ctx)); } catch {}
+      const params = new URLSearchParams({ openChat: "1", ...ctx });
+      window.location.href = `index.html?${params.toString()}`;
+    }
+
+    const ctx = getSavedContext();
+    
+    let quizState = { 
+      questions: [], 
+      currentIndex: 0, 
+      answers: [], 
+      showReview: false, 
+      startTime: null,
+      settings: { 
+        questionCount: 5, 
+        mode: "practice",
+        difficulty: "medium"
+      } 
+    };
+    
+    let quizSettings = {
+      questionCount: 5,
+      difficulty: "medium",
+      showExplanations: true
+    };
+    
+    async function renderSettings(){
+      // Show chapter info to confirm context
+      console.log("Chapter ID:", ctx.chapterId);
+      console.log("Chapter Title:", ctx.chapterTitle);
+      
+      el("toolBody").innerHTML = `
+        <div class="settings">
+          <div class="setting-row">
+            <span>📖 Chapter:</span>
+            <span style="color: #a6ffda;">${escapeHtml(ctx.chapterTitle)}</span>
+          </div>
+          <div class="setting-row">
+            <span>📊 Number of Questions</span>
+            <select id="questionCount">
+              <option value="3">3 Questions</option>
+              <option value="5" selected>5 Questions</option>
+              <option value="10">10 Questions</option>
+              <option value="15">15 Questions</option>
+            </select>
+          </div>
+          
+          <div class="setting-row">
+            <span>🎯 Difficulty Level</span>
+            <div class="mode-buttons" id="difficultyBtns">
+              <button class="mode-btn" data-difficulty="easy">Easy</button>
+              <button class="mode-btn active" data-difficulty="medium">Medium</button>
+              <button class="mode-btn" data-difficulty="hard">Hard</button>
+            </div>
+          </div>
+          
+          <div class="setting-row">
+            <span>🎯 Quiz Mode</span>
+            <div class="mode-buttons">
+              <button class="mode-btn active" data-mode="practice">Practice (Show Explanations)</button>
+              <button class="mode-btn" data-mode="exam">Exam Mode (No Explanations)</button>
+            </div>
+          </div>
+          
+          <button class="start-btn" id="startQuizBtn">🚀 Start AI-Generated Quiz</button>
+          <div class="tool-sub">Questions are loaded from the saved question bank. AI only fills a small gap when needed.</div>
+          <div class="panel" style="padding:14px;box-shadow:none;">
+            <div class="section-title" style="margin-top:0;">Quiz Leaderboard</div>
+            <div id="quizLeaderboard"><div class="hint">Loading leaderboard...</div></div>
+          </div>
+        </div>
+      `;
+      
+      document.querySelectorAll("[data-difficulty]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-difficulty]").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          quizSettings.difficulty = btn.dataset.difficulty;
+        });
+      });
+      
+      document.querySelectorAll("[data-mode]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-mode]").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          quizSettings.mode = btn.dataset.mode;
+          quizSettings.showExplanations = btn.dataset.mode === "practice";
+        });
+      });
+      
+      el("startQuizBtn").addEventListener("click", () => {
+        quizSettings.questionCount = parseInt(el("questionCount").value, 10);
+        generateQuizQuestions();
+      });
+
+      loadActivityLeaderboard("quiz", "quizLeaderboard");
+    }
+    
+    async function generateQuizQuestions(){
+      el("toolBody").innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading ${quizSettings.questionCount} saved questions from your chapter bank...</p><p style="font-size:12px; margin-top:10px;">Using: ${escapeHtml(ctx.chapterTitle)}</p></div>`;
+      
+      try {
+        const token = await getToken();
+        
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+        
+        if (!ctx.chapterId) {
+          throw new Error("No chapter selected. Please go back and select a chapter first.");
+        }
+        
+        console.log("Sending request to generate quiz:", {
+          moduleId: ctx.moduleId,
+          chapterId: ctx.chapterId,
+          chapterTitle: ctx.chapterTitle,
+          questionCount: quizSettings.questionCount,
+          difficulty: quizSettings.difficulty
+        });
+        
+        const endpoint = ctx.source === "exam-practice" ? "/exam-practice/quiz/generate" : "/quiz/generate";
+        const response = await fetch(`${API_BASE}${endpoint}`, { 
+          method: "POST", 
+          headers: { 
+            "Content-Type": "application/json", 
+            "Authorization": `Bearer ${token}` 
+          }, 
+          body: JSON.stringify({ 
+            moduleId: ctx.moduleId, 
+            chapterId: ctx.chapterId,
+            chapterIds: ctx.chapterIds,
+            chapterTitle: ctx.chapterTitle, 
+            questionCount: quizSettings.questionCount,
+            difficulty: quizSettings.difficulty,
+            questionTypes: ["mcq", "truefalse"]
+          }) 
+        });
+        
+        const data = await response.json();
+        console.log("Response from server:", data);
+        
+        if (data.ok && data.questions && data.questions.length > 0) {
+          quizState.questions = data.questions;
+          console.log(`✅ Received ${quizState.questions.length} AI-generated questions`);
+        } else {
+          console.warn("No questions from AI, using fallback");
+          quizState.questions = generateMockQuestions(ctx.chapterTitle, quizSettings.questionCount);
+        }
+        
+      } catch(error) { 
+        console.error("Failed to generate AI questions:", error);
+        el("toolBody").innerHTML = `
+          <div class="error-box">
+            <strong>⚠️ Could not generate AI questions</strong><br/>
+            Error: ${escapeHtml(error.message)}<br/><br/>
+            <button class="restart-btn" onclick="renderSettings()">Try Again</button>
+            <button class="restart-btn" onclick="goBackToLearning()">Back to Learning</button>
+          </div>
+        `;
+        return;
+      }
+      
+      if (!quizState.questions || quizState.questions.length === 0) {
+        el("toolBody").innerHTML = `
+          <div class="error-box">
+            <strong>⚠️ No questions were generated</strong><br/>
+            Please make sure your chapter has content and try again.<br/><br/>
+            <button class="restart-btn" onclick="renderSettings()">Try Again</button>
+          </div>
+        `;
+        return;
+      }
+      
+      quizState.answers = new Array(quizState.questions.length).fill(null);
+      quizState.currentIndex = 0;
+      quizState.showReview = false;
+      quizState.startTime = Date.now();
+      renderCurrentQuestion();
+    }
+    
+    // Fallback mock questions - only used when AI fails
+    function generateMockQuestions(chapter, count) { 
+      console.warn("Using MOCK questions because AI generation failed");
+      const base = [
+        {type:"mcq", text:`Based on the chapter "${chapter}", what is the most important concept for practical application?`, options:["Theoretical frameworks","Hands-on implementation","Historical background","Mathematical proofs"], correct:1, explanation:"The chapter emphasizes practical, hands-on skills that can be directly applied in real-world scenarios.", difficulty:"medium"},
+        {type:"truefalse", text:`The chapter "${chapter}" focuses primarily on theoretical concepts rather than practical application.`, options:["True","False"], correct:1, explanation:"The chapter is designed to bridge theory with practical, real-world applications.", difficulty:"easy"},
+        {type:"mcq", text:`How does "${chapter}" prepare you for real-world challenges?`, options:["By memorizing definitions","Through practical exercises and case studies","By reading textbooks only","Through theoretical discussions"], correct:1, explanation:"Hands-on exercises and real case studies help connect learning to practical situations.", difficulty:"medium"}
+      ]; 
+      let result = [];
+      for (let i = 0; i < count; i++) {
+        result.push({...base[i % base.length], id: i});
+      }
+      return result; 
+    }
+    
+    function renderCurrentQuestion(){
+      const q = quizState.questions[quizState.currentIndex];
+      const saved = quizState.answers[quizState.currentIndex];
+      const isLast = quizState.currentIndex === quizState.questions.length - 1;
+      const progress = ((quizState.currentIndex + 1) / quizState.questions.length) * 100;
+      const letters = ["A", "B", "C", "D"];
+      
+      let optionsHtml = "";
+      
+      if (q.type === "truefalse") {
+        optionsHtml = (q.options || ["True", "False"]).map((opt, idx) => {
+          let cls = "";
+          if (quizSettings.showExplanations && quizState.showReview && saved !== null) {
+            if (idx === q.correct) cls = "correct";
+            else if (saved === idx) cls = "wrong";
+          } else if (saved === idx) cls = "selected";
+          return `<div class="option-item ${cls}" data-index="${idx}"><div class="option-letter">${idx === 0 ? "T" : "F"}</div><div>${escapeHtml(opt)}</div></div>`;
+        }).join("");
+      } else {
+        optionsHtml = (q.options || []).map((opt, idx) => {
+          let cls = "";
+          if (quizSettings.showExplanations && quizState.showReview && saved !== null) {
+            if (idx === q.correct) cls = "correct";
+            else if (saved === idx) cls = "wrong";
+          } else if (saved === idx) cls = "selected";
+          return `<div class="option-item ${cls}" data-index="${idx}"><div class="option-letter">${letters[idx]}</div><div>${escapeHtml(opt)}</div></div>`;
+        }).join("");
+      }
+      
+      const showExplanation = quizSettings.showExplanations && quizState.showReview && saved !== null;
+      const explanation = showExplanation ? `<div class="explanation">${saved === q.correct ? "✅ Correct!" : "❌ Incorrect."} ${escapeHtml(q.explanation || '')}</div>` : "";
+      
+      const difficultyBadge = q.difficulty ? `<span style="background:${q.difficulty === 'easy' ? '#2ecc71' : q.difficulty === 'medium' ? '#f39c12' : '#e74c3c'}20; padding:2px 8px; border-radius:12px; font-size:11px; margin-left:10px;">${q.difficulty}</span>` : "";
+      const typeBadge = `<span style="background:rgba(138,180,255,0.2); padding:2px 8px; border-radius:12px; font-size:11px; margin-left:10px;">${q.type === 'mcq' ? 'Multiple Choice' : 'True/False'}</span>`;
+      
+      el("toolBody").innerHTML = `
+        <div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+          <div class="question-counter">
+            Question ${quizState.currentIndex+1} of ${quizState.questions.length}
+            ${typeBadge}${difficultyBadge}
+          </div>
+          <div class="question-text">${escapeHtml(q.text)}</div>
+          <div class="options-list" id="optionsList">${optionsHtml}</div>
+          ${explanation}
+          <div class="quiz-nav">
+            <button class="nav-btn" id="prevBtn" ${quizState.currentIndex===0?"disabled":""}>← Previous</button>
+            ${isLast ? `<button class="nav-btn submit" id="submitBtn">${quizState.showReview ? "✓ See Results" : "✓ Submit Quiz"}</button>` : `<button class="nav-btn" id="nextBtn">Next →</button>`}
+          </div>
+        </div>
+      `;
+      
+      if (!(quizSettings.showExplanations && quizState.showReview)) {
+        document.querySelectorAll("#optionsList .option-item").forEach(opt => {
+          opt.addEventListener("click", () => {
+            const selectedIndex = parseInt(opt.dataset.index, 10);
+            quizState.answers[quizState.currentIndex] = selectedIndex;
+            
+            if (!quizSettings.showExplanations) {
+              if (quizState.currentIndex < quizState.questions.length - 1) {
+                setTimeout(() => { quizState.currentIndex++; renderCurrentQuestion(); }, 250);
+              } else {
+                setTimeout(showResults, 250);
+              }
+            } else {
+              renderCurrentQuestion();
+            }
+          });
+        });
+      }
+      
+      el("prevBtn")?.addEventListener("click", () => {
+        if (quizState.currentIndex > 0) {
+          quizState.currentIndex--;
+          renderCurrentQuestion();
+        }
+      });
+      
+      el("nextBtn")?.addEventListener("click", () => {
+        if (quizState.currentIndex < quizState.questions.length - 1) {
+          quizState.currentIndex++;
+          renderCurrentQuestion();
+        }
+      });
+      
+      el("submitBtn")?.addEventListener("click", () => {
+        if (quizSettings.showExplanations && !quizState.showReview) {
+          quizState.showReview = true;
+          renderCurrentQuestion();
+        } else {
+          showResults();
+        }
+      });
+    }
+    
+    async function saveQuizAttempt({ score, pct, timeSpent }) {
+      try {
+        const token = await getToken();
+        if (!token) return;
+
+        const answers = quizState.questions.map((question, index) => {
+          const selectedIndex = quizState.answers[index];
+          const selectedAnswer = question.options?.[selectedIndex] ?? "";
+          const correctAnswer = question.options?.[question.correct] ?? question.correct_answer ?? "";
+          return {
+            questionId: question.id,
+            questionText: question.text,
+            topicTags: question.topic_tags || question.topics || [ctx.chapterTitle || "General"],
+            selectedAnswer,
+            correctAnswer,
+            isCorrect: selectedIndex === question.correct
+          };
+        });
+
+        await fetch(`${API_BASE}/activity/attempts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            activityType: "quiz",
+            moduleId: ctx.moduleId,
+            chapterId: ctx.chapterId,
+            score,
+            maxScore: quizState.questions.length,
+            accuracy: pct,
+            correctCount: score,
+            incorrectCount: quizState.questions.length - score,
+            timeTaken: timeSpent || 0,
+            participationCount: quizState.questions.length,
+            metadata: {
+              mode: quizSettings.mode,
+              difficulty: quizSettings.difficulty,
+              chapterTitle: ctx.chapterTitle
+            },
+            answers
+          })
+        });
+      } catch (error) {
+        console.warn("Could not save quiz leaderboard attempt:", error);
+      }
+    }
+
+    function showResults(){ 
+      const score = quizState.questions.filter((q, i) => quizState.answers[i] === q.correct).length;
+      const pct = Math.round((score / quizState.questions.length) * 100);
+      const timeSpent = quizState.startTime ? Math.round((Date.now() - quizState.startTime) / 1000) : null;
+      saveQuizAttempt({ score, pct, timeSpent });
+      
+      let msg = pct >= 90 ? "Excellent! 🎉 You've mastered this material!" : 
+                pct >= 70 ? "Good job! 👍 Keep up the great work!" : 
+                pct >= 50 ? "Keep practicing! 💪 You're making progress!" : 
+                "Review the material and try again 📚 Don't give up!";
+      
+      let reviewHtml = '';
+      if (quizSettings.showExplanations) {
+        reviewHtml = `
+          <div class="review-section" style="margin-top: 20px; text-align: left; max-height: 400px; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+            <div style="font-weight: bold; margin-bottom: 12px;">📝 Review Your Answers:</div>
+            ${quizState.questions.map((q, i) => {
+              const isCorrect = quizState.answers[i] === q.correct;
+              const userAnswerText = q.options ? q.options[quizState.answers[i]] : (quizState.answers[i] !== null ? quizState.answers[i] : "Not answered");
+              const correctAnswerText = q.options ? q.options[q.correct] : q.correct;
+              return `
+                <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; border-left: 4px solid ${isCorrect ? '#a6ffda' : '#ff7a7a'}">
+                  <div style="font-weight: bold; margin-bottom: 8px;">Q${i+1}: ${escapeHtml(q.text)}</div>
+                  <div style="font-size: 13px; color: ${isCorrect ? '#a6ffda' : '#ff7a7a'}">Your answer: ${escapeHtml(String(userAnswerText))}</div>
+                  ${!isCorrect ? `<div style="font-size: 13px; color: #a6ffda">Correct answer: ${escapeHtml(String(correctAnswerText))}</div>` : ''}
+                  <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px;">💡 ${escapeHtml(q.explanation || '')}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+      
+      el("toolBody").innerHTML = `
+        <div class="results-area">
+          <div class="score-circle">
+            <div>
+              <div class="score-number">${score}/${quizState.questions.length}</div>
+              <div class="score-label">${pct}%</div>
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:800">${msg}</div>
+          <div class="results-stats">
+            <div class="stat-row"><span>✅ Correct:</span><span>${score}</span></div>
+            <div class="stat-row"><span>❌ Incorrect:</span><span>${quizState.questions.length - score}</span></div>
+            <div class="stat-row"><span>📊 Mode:</span><span>${quizSettings.mode === "practice" ? "Practice" : "Exam"}</span></div>
+            <div class="stat-row"><span>🎯 Difficulty:</span><span>${quizSettings.difficulty}</span></div>
+            ${timeSpent ? `<div class="stat-row"><span>⏱️ Time Spent:</span><span>${Math.floor(timeSpent / 60)}m ${timeSpent % 60}s</span></div>` : ''}
+          </div>
+          ${reviewHtml}
+          <div class="panel" style="padding:14px;box-shadow:none;margin-top:20px;text-align:left;">
+            <div class="section-title" style="margin-top:0;">Quiz Leaderboard</div>
+            <div id="quizResultsLeaderboard"><div class="hint">Updating leaderboard...</div></div>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            <button class="restart-btn primary" onclick="location.reload()">⟳ New Quiz</button>
+            <button class="restart-btn" onclick="goBackToLearning()">📚 Back to Learning</button>
+          </div>
+        </div>
+      `;
+      setTimeout(() => loadActivityLeaderboard("quiz", "quizResultsLeaderboard"), 700);
+    }
+    
+    (async function init(){ 
+      if(!(await requireAuth())) return; 
+      el("contextLine").textContent = contextLabel(ctx); 
+      if(!ctx.chapterId) return showMissingContext(); 
+      renderSettings(); 
+    })();
+  </script>
+</body></html>

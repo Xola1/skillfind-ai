@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkillFind AI - Word Builder</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(15, 27, 46, .84);
+      --text: #f4f7fb;
+      --muted: #95a3b8;
+      --line: rgba(255,255,255,.12);
+      --brand: #8ab4ff;
+      --brand2: #a6ffda;
+      --danger: #ff7a7a;
+      --warn: #ffd166;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 15% 8%, rgba(138,180,255,.22), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(166,255,218,.14), transparent 28%),
+        linear-gradient(180deg, #08172b, #030711 70%);
+    }
+
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+
+    .topbar {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3, 7, 17, .76);
+      backdrop-filter: blur(16px);
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 13px;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    .btn.primary {
+      border-color: transparent;
+      color: #06101f;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .context { min-width: 0; }
+    .context-title { font-weight: 950; }
+    .context-sub {
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .screen {
+      height: calc(100vh - 68px);
+      display: grid;
+      grid-template-rows: 1fr;
+      overflow: hidden;
+    }
+
+    .setup {
+      grid-row: 1 / -1;
+      width: min(900px, calc(100% - 24px));
+      margin: auto;
+      display: grid;
+      gap: 16px;
+      justify-items: center;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      padding: 22px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+
+    .setup h1 { margin: 0; font-size: clamp(30px, 5vw, 52px); line-height: 1; }
+    .setup p { margin: 0; max-width: 680px; color: var(--muted); line-height: 1.55; }
+    .settings { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    select {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0b1728;
+      color: var(--text);
+      padding: 9px 12px;
+    }
+
+    .game {
+      grid-row: 1 / -1;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+
+    .builder-panel {
+      margin: 12px;
+      border: 1px solid rgba(166,255,218,.22);
+      border-radius: 18px;
+      background: rgba(3, 7, 17, .52);
+      box-shadow: 0 14px 34px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+
+    .question-card {
+      margin: 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: rgba(255,255,255,.045);
+      padding: 12px;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--brand2);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .question-text {
+      font-size: clamp(17px, 2.4vw, 24px);
+      line-height: 1.35;
+      font-weight: 900;
+    }
+
+    .word-slots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 12px 12px 8px;
+    }
+
+    .builder-input-wrap {
+      padding: 0 12px 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .builder-input {
+      width: min(420px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      padding: 11px 12px;
+      text-align: center;
+      font: inherit;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .builder-input:focus {
+      outline: 2px solid rgba(166,255,218,.36);
+      border-color: rgba(166,255,218,.45);
+    }
+
+    .slot {
+      width: 34px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(138,180,255,.34);
+      border-radius: 10px;
+      background: rgba(255,255,255,.055);
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .slot.filled {
+      border-color: rgba(166,255,218,.48);
+      background: rgba(166,255,218,.13);
+    }
+
+    .arena {
+      position: relative;
+      min-height: 320px;
+      overflow: hidden;
+      margin: 0 12px 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(138,180,255,.14), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.22));
+    }
+
+    .arena-label {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      z-index: 1;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .letter {
+      position: absolute;
+      z-index: 2;
+      top: -54px;
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(138,180,255,.42);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(138,180,255,.42), rgba(166,255,218,.20));
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 950;
+      box-shadow: 0 12px 28px rgba(0,0,0,.30);
+      animation: fall linear forwards;
+      user-select: none;
+    }
+
+    .letter.target {
+      border-color: rgba(166,255,218,.5);
+    }
+
+    .letter.wrong {
+      border-color: rgba(255,122,122,.7);
+      background: rgba(255,122,122,.18);
+    }
+
+    @keyframes fall {
+      to { transform: translateY(var(--fall-distance, 420px)); }
+    }
+
+    .hud {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 8;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(3, 7, 17, .78);
+      padding: 7px 10px;
+      font-weight: 900;
+      backdrop-filter: blur(12px);
+    }
+
+    .message {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: min(520px, calc(100% - 24px));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(3, 7, 17, .88);
+      padding: 10px 12px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 800;
+    }
+
+    @media (max-width: 640px) {
+      body { min-height: 100dvh; }
+      .topbar {
+        min-height: 58px;
+        padding: calc(7px + env(safe-area-inset-top)) 10px 7px;
+      }
+      .context-sub { display: none; }
+      .screen { height: calc(100dvh - 58px); }
+      .builder-panel { margin: 8px; border-radius: 16px; }
+      .question-card { padding: 10px; }
+      .question-text { font-size: 16px; }
+      .word-slots { gap: 6px; padding: 0 8px 8px; }
+      .builder-input-wrap { padding: 0 8px 8px; }
+      .slot { width: 30px; height: 36px; font-size: 18px; }
+      .letter { width: 44px; height: 44px; font-size: 22px; border-radius: 13px; }
+      .arena { min-height: 340px; margin: 0 8px 8px; }
+      .hud { right: 8px; bottom: 8px; max-width: calc(100% - 16px); }
+      .message { bottom: 54px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <button class="btn icon-btn" type="button" onclick="goBackToLearning()" aria-label="Go back" title="Go back">&lsaquo;</button>
+    <div class="context">
+      <div class="context-title">Word Builder</div>
+      <div class="context-sub" id="contextLine">Loading chapter...</div>
+    </div>
+  </header>
+
+  <main class="screen">
+    <section class="setup" id="setup">
+      <h1>Word Builder</h1>
+      <p>Build missing words by collecting falling letters in the correct order. This helps spelling, recall, and key term recognition.</p>
+      <div class="settings">
+        <select id="questionCount">
+          <option value="5" selected>5 Words</option>
+          <option value="10">10 Words</option>
+          <option value="15">15 Words</option>
+        </select>
+        <select id="speed">
+          <option value="slow" selected>Slow</option>
+          <option value="normal">Normal</option>
+          <option value="fast">Fast</option>
+        </select>
+        <button class="btn primary" type="button" id="startBtn">Start</button>
+      </div>
+      <div id="setupStatus" style="color:var(--muted)">Missing-word questions are loaded from your saved chapter question bank first.</div>
+    </section>
+
+    <section class="game hidden" id="game">
+      <div class="builder-panel">
+        <div class="question-card">
+          <div class="meta">
+            <span id="roundMeta">Word 1 of 5</span>
+            <span id="nextLetter">Next letter: -</span>
+          </div>
+          <div class="question-text" id="questionText"></div>
+        </div>
+        <div class="word-slots" id="wordSlots"></div>
+        <div class="builder-input-wrap">
+          <input class="builder-input" id="builderInput" autocomplete="off" autocapitalize="characters" placeholder="Type letters in order" />
+        </div>
+      </div>
+      <div class="arena" id="arena">
+        <div class="arena-label">Falling letters</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="hud hidden" id="hud">
+    <div class="pill">Score <span id="score">0</span></div>
+    <div class="pill">Lives <span id="lives">3</span></div>
+  </div>
+  <div class="message hidden" id="message"></div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="frontend/config.js"></script>
+  <script>
+    const API_BASE = "http://localhost:5050";
+    const STORAGE_CONTEXT_KEY = "skillfind:selectedContext";
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const el = id => document.getElementById(id);
+
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const speedMs = { slow: 7800, normal: 6200, fast: 5000 };
+
+    const state = {
+      questions: [],
+      current: 0,
+      target: "",
+      built: "",
+      score: 0,
+      lives: 3,
+      active: false,
+      spawnTimer: null,
+      letterNodes: []
+    };
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]);
+    }
+
+    function getSavedContext() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_CONTEXT_KEY) || "{}"); } catch {}
+      const p = new URLSearchParams(window.location.search);
+      return {
+        moduleId: p.get("moduleId") || saved.moduleId || "",
+        moduleName: p.get("moduleName") || saved.moduleName || "Module",
+        chapterId: p.get("chapterId") || saved.chapterId || "",
+        chapterTitle: p.get("chapterTitle") || saved.chapterTitle || "Chapter",
+        chapterNumber: p.get("chapterNumber") || saved.chapterNumber || "",
+        chapterIds: p.get("chapterIds") || saved.chapterIds || "",
+        source: p.get("source") || saved.source || ""
+      };
+    }
+
+    const ctx = getSavedContext();
+
+    function contextLabel() {
+      return `${ctx.moduleName} ${ctx.chapterNumber ? `Chapter ${ctx.chapterNumber}: ` : ""}${ctx.chapterTitle}`.trim();
+    }
+
+    function goBackToLearning() {
+      try { localStorage.setItem(STORAGE_CONTEXT_KEY, JSON.stringify(ctx)); } catch {}
+      const params = new URLSearchParams({ openChat: "1", ...ctx });
+      window.location.href = `index.html?${params.toString()}`;
+    }
+
+    async function getToken() {
+      const { data } = await sb.auth.getSession();
+      return data?.session?.access_token || localStorage.getItem("supabase_token") || "";
+    }
+
+    async function requireAuth() {
+      const { data } = await sb.auth.getSession();
+      if (!data?.session) {
+        window.location.href = "login.html";
+        return false;
+      }
+      localStorage.setItem("supabase_token", data.session.access_token);
+      return true;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+
+    function normalizeWord(value) {
+      return String(value || "")
+        .replace(/[^a-zA-Z]/g, "")
+        .toUpperCase();
+    }
+
+    function sentenceWithBlank(question) {
+      const text = String(question.text || question.question_text || question.question || "");
+      if (text.includes("____")) return text;
+      const answer = question.missing_word || question.correct_answer || question.answer || "";
+      if (answer && text.toLowerCase().includes(String(answer).toLowerCase())) {
+        return text.replace(new RegExp(String(answer).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), "_____");
+      }
+      return text || `Complete the missing word: _____`;
+    }
+
+    function adaptQuestion(question, index) {
+      const word = normalizeWord(question.missing_word || question.correct_answer || question.answer);
+      return {
+        id: question.id || `word-${index}`,
+        text: sentenceWithBlank(question),
+        word
+      };
+    }
+
+    async function loadQuestions(count) {
+      const endpoint = ctx.source === "exam-practice" ? "/exam-practice/word-builder/generate" : "/word-builder/generate";
+      const data = await apiFetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify({
+          moduleId: ctx.moduleId,
+          chapterId: ctx.chapterId,
+          chapterIds: ctx.chapterIds,
+          chapterTitle: ctx.chapterTitle,
+          questionCount: count
+        })
+      });
+
+      return (data.questions || [])
+        .map(adaptQuestion)
+        .filter(q => q.word.length >= 2 && q.word.length <= 14);
+    }
+
+    function setStatus(text) {
+      el("setupStatus").textContent = text;
+    }
+
+    function showMessage(text, duration = 1200) {
+      el("message").textContent = text;
+      el("message").classList.remove("hidden");
+      clearTimeout(showMessage.timer);
+      showMessage.timer = setTimeout(() => el("message").classList.add("hidden"), duration);
+    }
+
+    function updateHud() {
+      el("score").textContent = state.score;
+      el("lives").textContent = state.lives;
+    }
+
+    function clearLetters() {
+      clearTimeout(state.spawnTimer);
+      state.letterNodes.forEach(node => node.remove());
+      state.letterNodes = [];
+    }
+
+    function renderSlots() {
+      const chars = state.target.split("");
+      el("wordSlots").innerHTML = chars.map((char, index) => {
+        const filled = index < state.built.length;
+        return `<div class="slot ${filled ? "filled" : ""}">${filled ? escapeHtml(char) : ""}</div>`;
+      }).join("");
+      const next = state.target[state.built.length] || "-";
+      el("nextLetter").textContent = `Next letter: ${next}`;
+      el("builderInput").value = state.built;
+    }
+
+    function renderQuestion() {
+      clearLetters();
+      if (state.lives <= 0 || state.current >= state.questions.length) return finishGame();
+
+      const q = state.questions[state.current];
+      state.target = q.word;
+      state.built = "";
+      el("roundMeta").textContent = `Word ${state.current + 1} of ${state.questions.length}`;
+      el("questionText").textContent = q.text;
+      el("builderInput").value = "";
+      renderSlots();
+      spawnLetters();
+      setTimeout(() => el("builderInput").focus(), 50);
+    }
+
+    function chooseFallingLetter() {
+      const next = state.target[state.built.length];
+      if (!next) return letters[Math.floor(Math.random() * letters.length)];
+      if (!state.letterNodes.some(node => node.dataset.letter === next)) return next;
+      const pool = [next, next, next];
+      while (pool.length < 5) {
+        const random = letters[Math.floor(Math.random() * letters.length)];
+        if (random !== next || Math.random() > .55) pool.push(random);
+      }
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function spawnLetters() {
+      if (!state.active) return;
+      const arena = el("arena");
+      const letter = chooseFallingLetter();
+      const node = document.createElement("button");
+      node.type = "button";
+      node.className = "letter" + (letter === state.target[state.built.length] ? " target" : "");
+      node.textContent = letter;
+      node.dataset.letter = letter;
+      const maxLeft = Math.max(0, arena.clientWidth - 52);
+      node.style.left = `${Math.floor(Math.random() * maxLeft)}px`;
+      node.style.setProperty("--fall-distance", `${Math.max(260, arena.clientHeight + 80)}px`);
+      node.style.animationDuration = `${speedMs[el("speed").value] || speedMs.slow}ms`;
+      node.addEventListener("click", () => collectLetter(letter, node));
+      node.addEventListener("touchend", event => {
+        event.preventDefault();
+        collectLetter(letter, node);
+      }, { passive: false });
+      node.addEventListener("animationend", () => {
+        node.remove();
+        state.letterNodes = state.letterNodes.filter(item => item !== node);
+      });
+      arena.appendChild(node);
+      state.letterNodes.push(node);
+
+      const delay = window.matchMedia("(max-width: 640px)").matches ? 760 : 640;
+      state.spawnTimer = setTimeout(spawnLetters, delay);
+    }
+
+    function applyLetter(letter) {
+      if (!state.active) return;
+      const expected = state.target[state.built.length];
+
+      if (letter !== expected) {
+        state.lives -= 1;
+        updateHud();
+        showMessage(`Wrong letter. Find ${expected}.`);
+        if (state.lives <= 0) finishGame();
+        return false;
+      }
+
+      state.built += letter;
+      state.score += 10;
+      renderSlots();
+      updateHud();
+
+      if (state.built === state.target) {
+        state.score += 35;
+        updateHud();
+        showMessage(`Built ${state.target}`, 900);
+        setTimeout(() => {
+          state.current += 1;
+          renderQuestion();
+        }, 780);
+      }
+
+      return true;
+    }
+
+    function collectLetter(letter, node) {
+      if (!state.active) return;
+      node.remove();
+      state.letterNodes = state.letterNodes.filter(item => item !== node);
+      applyLetter(letter);
+    }
+
+    function finishGame() {
+      state.active = false;
+      clearLetters();
+      el("game").classList.add("hidden");
+      el("hud").classList.add("hidden");
+      el("setup").classList.remove("hidden");
+      const complete = state.current >= state.questions.length;
+      setStatus(`${complete ? "Great spelling practice." : "Game ended."} Score: ${state.score}.`);
+      el("startBtn").textContent = "Play Again";
+    }
+
+    async function startGame() {
+      if (!ctx.chapterId) {
+        setStatus("No chapter selected. Go back to Learning and select a chapter first.");
+        return;
+      }
+
+      try {
+        const count = parseInt(el("questionCount").value, 10);
+        setStatus("Loading missing-word questions...");
+        state.questions = await loadQuestions(count);
+        if (!state.questions.length) throw new Error("No missing-word questions were returned.");
+
+        state.current = 0;
+        state.score = 0;
+        state.lives = 3;
+        state.active = true;
+        el("setup").classList.add("hidden");
+        el("game").classList.remove("hidden");
+        el("hud").classList.remove("hidden");
+        updateHud();
+        renderQuestion();
+      } catch (error) {
+        setStatus(`Could not start Word Builder: ${error.message}`);
+      }
+    }
+
+    el("startBtn").addEventListener("click", startGame);
+    el("builderInput").addEventListener("keydown", event => {
+      if (!state.active) return;
+      const key = String(event.key || "").toUpperCase();
+      if (!/^[A-Z]$/.test(key)) {
+        if (event.key !== "Tab") event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      applyLetter(key);
+    });
+
+    (async function init() {
+      if (!(await requireAuth())) return;
+      el("contextLine").textContent = contextLabel();
+      if (!ctx.chapterId) setStatus("No chapter selected. Go back to Learning and select a chapter first.");
+    })();
+  </script>
+</body>
+</html>

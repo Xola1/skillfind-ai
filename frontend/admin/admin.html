@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes Tutor — Admin Dashboard</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- SIDEBAR ONLY - NO TOP TABS -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-area">
+          <img class="logo-icon" src="../../assets/logo.png" alt="SkillFind AI logo" />
+          <div class="logo-text">
+            <h2>SkillFind AI</h2>
+            <p>Admin Dashboard</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <button class="nav-item active" data-tab="courses">
+          <span class="nav-icon">📚</span>
+          <span>Courses</span>
+        </button>
+        <button class="nav-item" data-tab="modules">
+          <span class="nav-icon">📦</span>
+          <span>Modules</span>
+        </button>
+        <button class="nav-item" data-tab="moduleGuides">
+          <span class="nav-icon">📘</span>
+          <span>Module Guides</span>
+        </button>
+        <button class="nav-item" data-tab="exams">
+          <span class="nav-icon">📝</span>
+          <span>Exams & Tests</span>
+        </button>
+
+        <div class="nav-section-title">Management</div>
+        <button class="nav-item" data-tab="requests">
+          <span class="nav-icon">📬</span>
+          <span>Enrollment Requests</span>
+          <span class="nav-badge" id="pendingBadge">0</span>
+        </button>
+        <button class="nav-item" data-tab="chapters">
+          <span class="nav-icon">📑</span>
+          <span>Chapters</span>
+        </button>
+        <button class="nav-item" data-tab="students">
+          <span class="nav-icon">STU</span>
+          <span>Students</span>
+        </button>
+        <button class="nav-item" data-tab="leaderboard">
+          <span class="nav-icon">TOP</span>
+          <span>Leaderboard</span>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+        <button id="btnSignOut" class="sign-out-btn">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 class="page-title" id="pageTitle">Courses</h1>
+        <div class="top-bar-actions">
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" placeholder="Search..." id="globalSearch" />
+          </div>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div class="container">
+          <!-- COURSES PANEL -->
+          <div class="panel" id="panel-courses">
+            <div class="card">
+              <div class="card-header">
+                <h2>Courses</h2>
+                <button id="btnReloadCourses" class="btn btn-ghost">⟳ Reload</button>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label>Course Code</label>
+                  <input id="courseCode" placeholder="e.g. IT" />
+                </div>
+                <div class="form-field">
+                  <label>Course Name</label>
+                  <input id="courseName" placeholder="e.g. Information Technology" />
+                </div>
+              </div>
+
+              <div class="action-buttons">
+                <button id="btnCreateCourse" class="btn btn-primary">+ Create Course</button>
+                <div id="coursesStatus" class="status-text"></div>
+              </div>
+
+              <div class="table-wrapper">
+                <table id="coursesTable">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Name</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODULES PANEL -->
+          <div class="panel hidden" id="panel-modules">
+            <iframe
+              id="modulesFrame"
+              src="module.html"
+              title="Modules"
+              style="width: 100%; min-height: 760px; height: calc(100vh - 130px); border: none; background: transparent;"
+            ></iframe>
+          </div>
+
+          <!-- MODULE GUIDES PANEL -->
+          <div class="panel hidden" id="panel-moduleGuides">
+            <iframe
+              id="pageFrame"
+              src="module-guide.html"
+              title="Module Guides"
+              style="width: 100%; min-height: 760px; height: calc(100vh - 130px); border: none; background: transparent;"
+            ></iframe>
+          </div>
+
+          <!-- EXAMS PANEL -->
+          <div class="panel hidden" id="panel-exams">
+            <div class="card">
+              <div class="card-header">
+                <h2>Exams & Test Papers</h2>
+                <button id="btnReloadExams" class="btn btn-ghost">⟳ Reload</button>
+              </div>
+
+              <div class="card" style="margin-top: 0;">
+                <h3>📄 Upload New Exam / Test Paper</h3>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label>Select Course *</label>
+                    <select id="examCourseSelect"></select>
+                  </div>
+                  <div class="form-field">
+                    <label>Select Module (Optional)</label>
+                    <select id="examModuleSelect">
+                      <option value="">All Modules</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Exam Type *</label>
+                    <select id="examTypeSelect">
+                      <option value="previous_exam">📝 Previous Exam Paper</option>
+                      <option value="practice_test">✏️ Practice Test</option>
+                      <option value="mock_exam">🎯 Mock Exam</option>
+                      <option value="quiz">📋 Quiz</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Title *</label>
+                    <input id="examTitle" placeholder="e.g. 2023 Final Examination" />
+                  </div>
+                  <div class="form-field">
+                    <label>Description</label>
+                    <input id="examDescription" placeholder="Brief description" />
+                  </div>
+                  <div class="form-field">
+                    <label>Year</label>
+                    <input id="examYear" type="number" placeholder="e.g. 2023" />
+                  </div>
+                  <div class="form-field">
+                    <label>Duration (minutes)</label>
+                    <input id="examDuration" type="number" placeholder="e.g. 180" />
+                  </div>
+                  <div class="form-field">
+                    <label>Total Marks</label>
+                    <input id="examTotalMarks" type="number" placeholder="e.g. 100" />
+                  </div>
+                  <div class="form-field">
+                    <label>📎 Upload Exam File (PDF) *</label>
+                    <input id="examFile" type="file" accept=".pdf" />
+                  </div>
+                  <div class="form-field">
+                    <label>📎 Upload Answer Key (Optional)</label>
+                    <input id="answerFile" type="file" accept=".pdf" />
+                  </div>
+                </div>
+
+                <div class="action-buttons">
+                  <button id="btnUploadExam" class="btn btn-primary">⬆️ Upload Exam Paper</button>
+                  <div id="examsStatus" class="status-text"></div>
+                </div>
+              </div>
+
+              <div class="table-wrapper">
+                <table id="examsTable">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Course</th>
+                      <th>Module</th>
+                      <th>Type</th>
+                      <th>Year</th>
+                      <th>Duration</th>
+                      <th>Uploaded</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- REQUESTS PANEL -->
+          <div class="panel hidden" id="panel-requests">
+            <iframe
+              id="requestsFrame"
+              src="request.html"
+              title="Enrollment Requests"
+              style="width: 100%; min-height: 760px; height: calc(100vh - 130px); border: none; background: transparent;"
+            ></iframe>
+          </div>
+
+          <!-- CHAPTERS PANEL -->
+          <div class="panel hidden" id="panel-chapters">
+            <iframe
+              id="chaptersFrame"
+              src="chapter.html"
+              title="Chapters"
+              style="width: 100%; min-height: 760px; height: calc(100vh - 130px); border: none; background: transparent;"
+            ></iframe>
+          </div>
+
+          <!-- STUDENTS PANEL -->
+          <div class="panel hidden" id="panel-students">
+            <iframe
+              id="studentsFrame"
+              src="students.html"
+              title="Students"
+              style="width: 100%; min-height: 760px; height: calc(100vh - 130px); border: none; background: transparent;"
+            ></iframe>
+          </div>
+
+          <!-- LEADERBOARD / ANALYTICS PANEL -->
+          <div class="panel hidden" id="panel-leaderboard">
+            <div class="card">
+              <div class="card-header">
+                <h2>Leaderboard & Learning Analytics</h2>
+                <button id="btnReloadLeaderboard" class="btn btn-ghost">Reload</button>
+              </div>
+
+              <div class="analytics-grid" id="leaderboardSummary">
+                <div class="analytics-card"><div class="analytics-value">0</div><div class="analytics-label">Attempts</div></div>
+                <div class="analytics-card"><div class="analytics-value">0</div><div class="analytics-label">Active Students</div></div>
+                <div class="analytics-card"><div class="analytics-value">0</div><div class="analytics-label">Questions Answered</div></div>
+                <div class="analytics-card"><div class="analytics-value">0%</div><div class="analytics-label">Average Accuracy</div></div>
+              </div>
+
+              <div class="analytics-columns">
+                <section class="analytics-section"><h3>Top Leaderboards</h3><div id="leaderboardRows" class="analytics-list"></div></section>
+                <section class="analytics-section"><h3>Most Participating Students</h3><div id="participantRows" class="analytics-list"></div></section>
+                <section class="analytics-section"><h3>Most Asked Topics</h3><div id="topicRows" class="analytics-list"></div></section>
+                <section class="analytics-section"><h3>Most Correct Answers</h3><div id="correctRows" class="analytics-list"></div></section>
+                <section class="analytics-section"><h3>Most Incorrect Answers</h3><div id="incorrectRows" class="analytics-list"></div></section>
+              </div>
+            </div>
+          </div>
+
+          <!-- DEBUG -->
+          <div class="debug-box">
+            <div class="debug-header">
+              <span>🔍 Debug Console</span>
+              <button id="btnClearDebug" class="btn btn-ghost">Clear</button>
+            </div>
+            <pre id="debug" class="debug-content"></pre>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

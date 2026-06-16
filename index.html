@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta 
+    name="viewport" 
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+  />
+
+  <title>SkillFind AI — Mobile Learning</title>
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #0b1220;
+      --sidebar-bg: rgba(10, 15, 27, 0.96);
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --accent: #8ab4ff;
+      --accent2: #a6ffda;
+      --danger: #ff7a7a;
+      --shadow: 0 18px 48px rgba(0,0,0,.40);
+      --r: 16px;
+      --r2: 12px;
+      --sidebar-width: 280px;
+      --sidebar-collapsed: 0px;
+    }
+
+    body {
+      background: radial-gradient(900px 600px at 10% 0%, rgba(138,180,255,0.16), transparent 55%),
+                  radial-gradient(700px 500px at 100% 20%, rgba(166,255,218,0.10), transparent 60%),
+                  var(--bg);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+    }
+
+    .app {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 85%;
+      max-width: 300px;
+      background: linear-gradient(180deg, rgba(10,15,27,0.98), rgba(5,8,18,0.98));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border);
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px;
+      gap: 16px;
+      overflow-y: auto;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(3px);
+      z-index: 1050;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: 0.2s;
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+
+    .iconBtn {
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      font-size: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .learning-context {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .context-module {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent2);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .context-chapter {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      padding-bottom: 2px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      color: white;
+    }
+
+    .practice-game-card {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .practice-game-title {
+      display: none;
+    }
+
+    #btnStudyMenu {
+      display: none;
+    }
+
+    .btn.ghost {
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      font-size: 13px;
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .chat {
+      overflow-y: auto;
+      padding: 18px 14px;
+      scroll-behavior: smooth;
+    }
+
+    .embedded-page {
+      display: none;
+      min-height: 0;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .main.embedded-active {
+      grid-template-rows: auto 1fr;
+    }
+
+    .main.embedded-active .chat,
+    .main.embedded-active .composerWrap {
+      display: none !important;
+    }
+
+    .main.embedded-active .embedded-page {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .embedded-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      padding: 8px 10px;
+      flex: 0 0 auto;
+    }
+
+    .embedded-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .embedded-frame {
+      width: 100%;
+      min-height: 0;
+      flex: 1 1 auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(0,0,0,.20);
+    }
+
+    .step-flow {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .step-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .modules-grid,
+    .chapters-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 560px) {
+      .modules-grid,
+      .chapters-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      }
+    }
+
+    .module-card,
+    .chapter-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 18px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .module-card:active,
+    .chapter-card:active {
+      transform: scale(0.98);
+      background: rgba(255,255,255,.08);
+    }
+
+    .module-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .module-name {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 8px 16px;
+      margin-bottom: 18px;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+    }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .msg {
+      display: flex;
+      width: 100%;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .msg.user {
+      justify-content: flex-end;
+      flex-direction: row;
+    }
+
+    .msg.ai {
+      justify-content: flex-start;
+      flex-direction: row;
+    }
+
+    .msg.user .bubble {
+      text-align: left;
+      order: 1;
+    }
+
+    .msg.user .avatar {
+      order: 2;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .msg.ai .avatar {
+      background: linear-gradient(135deg, #3b6eff, #8ab4ff);
+      border: 1px solid rgba(138,180,255,.5);
+    }
+
+    .msg.user .avatar {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      border: 1px solid rgba(46,204,113,.6);
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      border-radius: 20px;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .msg.has-cards .bubble {
+      width: min(860px, calc(100% - 44px));
+      max-width: min(860px, calc(100% - 44px));
+      padding: 14px;
+    }
+
+    .answer-summary {
+      margin-bottom: 12px;
+    }
+
+    .answer-summary p:first-child {
+      margin-top: 0;
+    }
+
+    .answer-summary p:last-child {
+      margin-bottom: 0;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .answer-block {
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+      padding: 12px;
+    }
+
+    .answer-block-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--accent2);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .answer-block ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .answer-block li + li {
+      margin-top: 6px;
+    }
+
+    .answer-block p {
+      margin: 0;
+    }
+
+    .msg.ai .bubble {
+      background: rgba(20, 28, 40, 0.9);
+      border: 1px solid rgba(255,255,255,.12);
+      border-top-left-radius: 6px;
+      border-top-right-radius: 18px;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+
+    .msg.user .bubble {
+      background: rgba(46, 204, 113, 0.12);
+      border: 1px solid rgba(46, 204, 113, 0.35);
+      border-top-right-radius: 6px;
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+
+    .quickGrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      background: rgba(138,180,255,0.12);
+      border: 1px solid rgba(138,180,255,0.3);
+      border-radius: 40px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--accent2);
+    }
+
+    .composerWrap {
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,.3);
+      backdrop-filter: blur(12px);
+      padding: 10px 12px 14px;
+      flex-shrink: 0;
+    }
+
+    .composer {
+      display: flex;
+      gap: 10px;
+      max-width: 100%;
+    }
+
+    .composerInput {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 32px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.5);
+      color: white;
+      font-size: 15px;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #8ab4ff, #a6ffda);
+      border: none;
+      color: #0b1220;
+      font-weight: 700;
+      padding: 0 18px;
+      border-radius: 40px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .treeItem .treeChildren {
+      display: none;
+    }
+
+    .treeItem.open .treeChildren {
+      display: block;
+    }
+
+    .treeHead {
+      width: 100%;
+      text-align: left;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .treeChildBtn {
+      width: 100%;
+      text-align: left;
+      background: rgba(0,0,0,.2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      margin-top: 8px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .treeEmpty {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 8px;
+    }
+
+    .chat-history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .chat-history-list {
+      display: grid;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .history-item {
+      width: 100%;
+      text-align: left;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      cursor: pointer;
+      padding: 9px 10px;
+    }
+
+    .history-item.active,
+    .history-item:hover {
+      background: rgba(138,180,255,0.14);
+      border-color: rgba(138,180,255,0.42);
+    }
+
+    .history-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .history-preview {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-meta {
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .study-mode-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .study-mode-list > .study-mode-item + .study-mode-item {
+      margin-top: 14px;
+    }
+
+    .study-mode-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      gap: 14px;
+      cursor: pointer;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, rgba(9,14,25,0.98), rgba(5,9,18,0.98));
+      padding: 14px 10px;
+      gap: 12px;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 2px 8px;
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .sbLogo {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(138,180,255,.24);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      object-fit: contain;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .sidebar-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sidebar-card {
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 10px;
+    }
+
+    .sidebar-label {
+      color: rgba(255,255,255,.46);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      line-height: 1;
+      padding: 0 4px;
+      text-transform: uppercase;
+    }
+
+    .account-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    #whoami {
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .treeHead,
+    .treeChildBtn,
+    .study-mode-item,
+    .history-item {
+      transition: background .16s ease, border-color .16s ease, color .16s ease;
+    }
+
+    .treeHead {
+      background: transparent;
+      border-color: transparent;
+      border-radius: 10px;
+      margin-bottom: 3px;
+      padding: 9px 10px;
+      font-size: 13px;
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .treeHead:hover,
+    .treeItem.open .treeHead {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .treeChildBtn {
+      background: transparent;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      padding: 8px 10px 8px 24px;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .treeChildBtn:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .study-mode-list {
+      gap: 6px;
+    }
+
+    .study-mode-list > .study-mode-item + .study-mode-item {
+      margin-top: 0;
+    }
+
+    .study-mode-item {
+      align-items: center;
+      background: transparent;
+      border-color: transparent;
+      border-radius: 10px;
+      color: var(--text);
+      gap: 10px;
+      padding: 9px 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .study-mode-item:hover,
+    .study-mode-item.active {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .chat-history-head {
+      margin-bottom: 2px;
+      padding: 0 4px;
+    }
+
+    .chat-history-list {
+      gap: 2px;
+      max-height: 240px;
+      padding-right: 1px;
+      scrollbar-width: thin;
+    }
+
+    .history-item {
+      background: transparent;
+      border-color: transparent;
+      border-radius: 10px;
+      min-width: 0;
+      padding: 8px 9px;
+    }
+
+    .history-item.active,
+    .history-item:hover {
+      background: rgba(255,255,255,0.075);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .history-title {
+      color: rgba(255,255,255,.88);
+      font-size: 13px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-preview {
+      color: rgba(255,255,255,.52);
+    }
+
+    .history-meta {
+      color: rgba(255,255,255,.38);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 10px 4px 2px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,.42);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .debug details {
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    @supports (height: 100dvh) {
+      body,
+      .main {
+        height: 100dvh;
+      }
+    }
+
+    @media (min-width: 900px) {
+      body {
+        position: static;
+      }
+
+      .sidebar {
+        position: static;
+        transform: none;
+        width: var(--sidebar-width);
+        max-width: var(--sidebar-width);
+        box-shadow: none;
+      }
+
+      .sidebar-overlay,
+      #btnOpenSidebar,
+      #btnCloseSidebar {
+        display: none;
+      }
+
+      .chat {
+        padding: 24px;
+      }
+
+      .step-flow,
+      .learning-interface {
+        max-width: 960px;
+      }
+
+      .bubble {
+        max-width: 720px;
+      }
+    }
+
+    @media (max-width: 899px) {
+      body {
+        min-height: 100dvh;
+        height: auto;
+        overflow: hidden;
+        position: static;
+        inset: auto;
+      }
+
+      .app,
+      .main {
+        min-height: 100dvh;
+        height: 100dvh;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+        align-items: center;
+        gap: 8px;
+        padding: calc(8px + env(safe-area-inset-top)) 10px 8px;
+      }
+
+      .learning-context {
+        grid-column: 2;
+      }
+
+      .action-buttons {  
+        position: fixed;
+        top: calc(58px + env(safe-area-inset-top));
+        right: 10px;
+        z-index: 1040;
+        width: min(230px, calc(100vw - 20px));
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: visible;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(10, 15, 27, 0.98);
+        box-shadow: 0 18px 42px rgba(0,0,0,.45);
+        transform: translateX(calc(100% + 18px));
+        opacity: 0;
+        pointer-events: none;
+        transition: transform .2s ease, opacity .2s ease;
+      }
+
+      .action-buttons.open {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .action-btn {
+        width: 100%;
+        justify-content: flex-start;
+        min-height: 38px;
+        padding: 9px 12px;
+        border-radius: 12px;
+      }
+
+      .practice-game-card {
+        display: grid;
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid rgba(166,255,218,.18);
+        border-radius: 14px;
+        background: rgba(166,255,218,.07);
+      }
+
+      .practice-game-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent2);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      #btnStudyMenu {
+        display: inline-flex;
+        grid-column: 4;
+        grid-row: 1;
+      }
+
+      #btnReload {
+        grid-column: 3;
+        grid-row: 1;
+        min-width: 40px;
+        height: 40px;
+        padding: 0;
+      }
+
+      .chat {
+        padding: 14px 12px;
+        min-height: 0;
+      }
+
+      .step-title {
+        font-size: 20px;
+        margin-bottom: 14px;
+      }
+
+      .module-card,
+      .chapter-card {
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      .module-name {
+        font-size: 16px;
+      }
+
+      .back-button {
+        min-height: 40px;
+        margin-bottom: 14px;
+      }
+
+      .empty {
+        border-radius: 18px !important;
+        padding: 16px !important;
+      }
+
+      .msg {
+        gap: 8px;
+      }
+
+      .msg.user {
+        justify-content: flex-end;
+      }
+
+      .avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+      }
+
+      .bubble {
+        max-width: calc(100% - 38px);
+        padding: 10px 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .msg.has-cards .bubble {
+        width: calc(100% - 38px);
+        max-width: calc(100% - 38px);
+        padding: 12px;
+      }
+
+      .answer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quickGrid {
+        gap: 6px;
+      }
+
+      .chip {
+        max-width: 100%;
+        white-space: normal;
+        text-align: left;
+      }
+
+      .composerWrap {
+        padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+      }
+
+      .composer {
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .composerInput {
+        min-width: 0;
+        min-height: 44px;
+        padding: 11px 12px;
+      }
+
+      .btn.primary {
+        min-width: 68px;
+        min-height: 44px;
+        padding: 0 14px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .sidebar {
+        width: min(88vw, 300px);
+      }
+
+      .topbar {
+        grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+      }
+
+      .context-module {
+        font-size: 10px;
+      }
+
+      .context-chapter {
+        font-size: 12px;
+      }
+
+      .composer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .btn.primary {
+        width: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-lockup">
+          <img class="sbLogo" src="assets/logo.png" alt="SkillFind AI logo" />
+          <div>
+            <div class="brand-name">SkillFind AI</div>
+            <div class="brand-sub">Learn. Build.</div>
+          </div>
+        </div>
+
+        <button class="iconBtn" id="btnCloseSidebar" style="width:36px;height:36px;">✕</button>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-label" style="margin-bottom:8px;">Account</div>
+        <div class="account-row">
+          <span id="whoami">—</span>
+          <button id="btnLogout" class="btn ghost" style="padding:4px 12px;">Sign out</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Modules</div>
+        <div id="modulesTree" class="tree"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Study Mode</div>
+        <div class="study-mode-list">
+          <div class="study-mode-item" id="examStudySidebarBtn">
+            <span>📝</span>
+            <span>Exam Study</span>
+          </div>
+          <div class="study-mode-item" id="testStudySidebarBtn">
+            <span>📝</span>
+            <span>Test Study</span>
+          </div>
+          <div class="study-mode-item" id="myLibrarySidebarBtn">
+            <span>📝</span>
+            <span>My Library</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="chat-history-head">
+          <div class="sidebar-label" style="padding:0;">Chat History</div>
+          <button id="btnNewChat" class="btn ghost" style="padding:4px 8px;font-size:11px;">New</button>
+        </div>
+        <div id="chatHistoryList" class="chat-history-list">
+          <div class="treeEmpty">No saved chats yet.</div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        💡 Select module → chapter → ask
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="iconBtn" id="btnOpenSidebar" aria-label="Menu">☰</button>
+
+        <div class="learning-context" id="learningContext" style="display:none">
+          <div class="context-module" id="contextModule"></div>
+          <div class="context-chapter" id="contextChapter"></div>
+        </div>
+
+        <div class="action-buttons" id="actionButtons" style="display:none">
+          <button class="action-btn" id="btnQuiz">📝 Quiz</button>
+          <button class="action-btn" id="btnFlashcard">🃏 Flash</button>
+          <button class="action-btn" id="btnChapterStudy">📖 Chapter-Study</button>
+          <button class="action-btn" id="btnQuestionPredictor"> Question Predictor</button>
+          <div class="practice-game-card">
+            <div class="practice-game-title">🎮 Practice Game</div>
+            <button class="action-btn" id="btnWordBuilder">🔤 Word Builder</button>
+            <button class="action-btn" id="btnInvaderChallenge">🚀 Invader Challenge</button>
+          </div>
+        </div>
+
+        <button class="iconBtn" id="btnStudyMenu" aria-label="Study tools">⋯</button>
+        <button id="btnReload" class="btn ghost" style="font-size:12px;">⟳</button>
+      </header>
+
+      <section class="chat" id="chat">
+        <div id="chatContent"></div>
+        <div class="messages" id="messages"></div>
+      </section>
+
+      <section class="embedded-page hidden" id="embeddedPage">
+        <div class="embedded-toolbar">
+          <div class="embedded-title" id="embeddedTitle">Student Page</div>
+          <button class="btn ghost" id="btnCloseEmbedded" type="button">Close</button>
+        </div>
+        <iframe class="embedded-frame" id="embeddedFrame" title="Student Page"></iframe>
+      </section>
+
+      <footer class="composerWrap hidden" id="composerWrap">
+        <div class="statusLine">
+          <span id="status" class="status"></span>
+        </div>
+
+        <div class="composer">
+          <input 
+            id="keyword" 
+            class="composerInput" 
+            placeholder="Ask about this chapter... (Enter)" 
+            autocomplete="off"
+          />
+          <button id="btnAsk" class="btn primary">Send</button>
+        </div>
+
+        <details class="debug">
+          <summary>Debug</summary>
+          <pre id="debug" class="output" style="font-size:10px;"></pre>
+        </details>
+      </footer>
+    </main>
+  </div>
+  <script>
+     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    if (
+      !window.APP_CONFIG ||
+      !window.APP_CONFIG.SUPABASE_URL ||
+      !window.APP_CONFIG.SUPABASE_ANON_KEY
+    ) {
+      alert("Supabase config is missing. Please check config.js.");
+      window.location.replace("login.html");
+    }
+
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
+    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const API_BASE = "http://localhost:5050";
+    const API_MODULES = `${API_BASE}/student/modules`;
+    const API_CHAPTERS = `${API_BASE}/student/chapters`;
+    const API_ASK = `${API_BASE}/student/chat/ask`;
+    const API_CHAT_CONVERSATIONS = `${API_BASE}/student/chat/conversations`;
+    const API_CHAT_MESSAGES = `${API_BASE}/student/chat/messages`;
+
+    const $ = id => document.getElementById(id);
+
+    const ui = {
+      whoami: $("whoami"),
+      btnLogout: $("btnLogout"),
+      btnReload: $("btnReload"),
+      btnNewChat: $("btnNewChat"),
+      chatHistoryList: $("chatHistoryList"),
+      modulesTree: $("modulesTree"),
+      messages: $("messages"),
+      chatContent: $("chatContent"),
+      keyword: $("keyword"),
+      btnAsk: $("btnAsk"),
+      status: $("status"),
+      debug: $("debug"),
+      composerWrap: $("composerWrap"),
+      learningContext: $("learningContext"),
+      actionButtons: $("actionButtons"),
+      btnStudyMenu: $("btnStudyMenu"),
+      contextModule: $("contextModule"),
+      contextChapter: $("contextChapter"),
+      chat: $("chat"),
+      main: document.querySelector(".main"),
+      embeddedPage: $("embeddedPage"),
+      embeddedFrame: $("embeddedFrame"),
+      embeddedTitle: $("embeddedTitle"),
+      btnCloseEmbedded: $("btnCloseEmbedded")
+    };
+
+    let state = {
+      modules: [],
+      chaptersByModule: {},
+      openModuleId: null,
+      selectedModuleId: null,
+      selectedModuleLabel: null,
+      selectedChapterId: null,
+      selectedChapterData: null,
+      selectedChapterLabel: null,
+      conversationId: null,
+      conversations: [],
+      loadingConversation: false,
+      flowStep: "modules",
+      user: null,
+      profile: null
+    };
+
+    const setStatus = txt => {
+      if (ui.status) {
+        ui.status.textContent = txt;
+      }
+    };
+
+    const clearNode = parent => {
+      while (parent && parent.firstChild) {
+        parent.removeChild(parent.firstChild);
+      }
+    };
+
+    const escapeHtml = str => {
+      return String(str || "").replace(/[&<>]/g, m => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;"
+      })[m]);
+    };
+
+    async function getToken() {
+      const { data } = await sbClient.auth.getSession();
+      return data && data.session ? data.session.access_token : "";
+    }
+
+    async function apiFetch(url, opts = {}) {
+      const token = await getToken();
+
+      if (!token) {
+        window.location.replace("login.html");
+        throw new Error("Not authenticated.");
+      }
+
+      const headers = {
+        ...(opts.headers || {}),
+        Authorization: `Bearer ${token}`
+      };
+
+      const res = await fetch(url, {
+        ...opts,
+        headers
+      });
+
+      const text = await res.text();
+
+      let json = null;
+
+      try {
+        json = JSON.parse(text);
+      } catch (error) {
+        throw new Error(text || "Invalid server response.");
+      }
+
+      if (!res.ok) {
+        throw new Error(json.message || json.error || `HTTP ${res.status}`);
+      }
+
+      return json;
+    }
+
+    async function getStudentProfile(userId) {
+      const { data, error } = await sbClient
+        .from("profiles")
+        .select("id, role, full_name, course_id")
+        .eq("id", userId)
+        .single();
+
+      if (error || !data) {
+        throw new Error("Profile not found.");
+      }
+
+      return data;
+    }
+
+    async function protectStudentPage() {
+      const {
+        data: { session },
+        error: sessionError
+      } = await sbClient.auth.getSession();
+
+      if (sessionError || !session || !session.user) {
+        window.location.replace("login.html");
+        return null;
+      }
+
+      const profile = await getStudentProfile(session.user.id);
+
+      if (!profile || profile.role !== "student") {
+        await sbClient.auth.signOut();
+        localStorage.removeItem("skillfind_user");
+        window.location.replace("login.html");
+        return null;
+      }
+
+      localStorage.setItem(
+        "skillfind_user",
+        JSON.stringify({
+          id: session.user.id,
+          email: session.user.email,
+          role: profile.role,
+          full_name: profile.full_name || "",
+          course_id: profile.course_id || null
+        })
+      );
+
+      state.user = session.user;
+      state.profile = profile;
+
+      return {
+        user: session.user,
+        profile
+      };
+    }
+
+    function updateTopbarContext() {
+      if (
+        state.flowStep === "learning" &&
+        state.selectedChapterData &&
+        state.selectedModuleLabel
+      ) {
+        ui.learningContext.style.display = "flex";
+        ui.actionButtons.style.display = "flex";
+        ui.btnStudyMenu.style.display = "";
+        ui.contextModule.textContent = state.selectedModuleLabel;
+
+        const num = state.selectedChapterData.chapter_number || "";
+        const title = state.selectedChapterLabel || "Chapter";
+
+        ui.contextChapter.textContent = num ? `Ch ${num}: ${title}` : title;
+      } else {
+        ui.learningContext.style.display = "none";
+        ui.actionButtons.style.display = "none";
+        ui.actionButtons.classList.remove("open");
+        ui.btnStudyMenu.style.display = "none";
+      }
+    }
+
+    function hideComposer() {
+      if (ui.composerWrap) {
+        ui.composerWrap.classList.add("hidden");
+      }
+    }
+
+    function showComposer() {
+      if (ui.composerWrap) {
+        ui.composerWrap.classList.remove("hidden");
+      }
+    }
+
+    function clearMessages() {
+      clearNode(ui.messages);
+    }
+
+    function renderMarkdown(target, text) {
+      if (window.marked && window.DOMPurify) {
+        marked.setOptions({
+          breaks: true,
+          gfm: true
+        });
+        target.innerHTML = DOMPurify.sanitize(marked.parse(text || ""));
+      } else {
+        target.textContent = text || "";
+      }
+    }
+
+    function blockIcon(type) {
+      const icons = {
+        key_points: "KEY",
+        example: "EX",
+        study_moves: "DO"
+      };
+      return icons[type] || "INFO";
+    }
+
+    function renderAnswerCards(bubble, display) {
+      const summary = document.createElement("div");
+      summary.className = "answer-summary";
+      renderMarkdown(summary, display.summary || display.answer || "");
+      bubble.appendChild(summary);
+
+      const cards = Array.isArray(display.cards) ? display.cards : [];
+      if (!cards.length) return;
+
+      const grid = document.createElement("div");
+      grid.className = "answer-grid";
+
+      cards.forEach(card => {
+        const block = document.createElement("section");
+        block.className = "answer-block";
+
+        const title = document.createElement("div");
+        title.className = "answer-block-title";
+        title.textContent = `${blockIcon(card.type)} ${card.title || "Study note"}`;
+        block.appendChild(title);
+
+        if (Array.isArray(card.items) && card.items.length) {
+          const list = document.createElement("ul");
+          card.items.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+          });
+          block.appendChild(list);
+        } else if (card.text) {
+          const text = document.createElement("p");
+          text.textContent = card.text;
+          block.appendChild(text);
+        }
+
+        grid.appendChild(block);
+      });
+
+      bubble.appendChild(grid);
+    }
+
+    function addMsg(role, text, { followUps = [], display = null } = {}) {
+      if (!ui.messages) return;
+
+      const emptyEl = document.getElementById("learningEmptyState");
+
+      if (emptyEl) {
+        emptyEl.style.display = "none";
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = `msg ${role}`;
+      if (role === "ai" && display && Array.isArray(display.cards) && display.cards.length) {
+        wrap.classList.add("has-cards");
+      }
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = role === "user" ? "U" : "AI";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      if (role === "ai" && display && Array.isArray(display.cards)) {
+        renderAnswerCards(bubble, display);
+      } else if (role === "ai") {
+        renderMarkdown(bubble, text);
+      } else {
+        bubble.textContent = text;
+      }
+
+      wrap.appendChild(avatar);
+      wrap.appendChild(bubble);
+
+      if (role === "ai" && followUps && followUps.length) {
+        const fuDiv = document.createElement("div");
+        fuDiv.className = "quickGrid";
+
+        followUps.slice(0, 3).forEach(q => {
+          const chip = document.createElement("button");
+          chip.className = "chip";
+          chip.textContent = q;
+
+          chip.addEventListener("click", () => {
+            ui.keyword.value = q;
+            ui.keyword.focus();
+          });
+
+          fuDiv.appendChild(chip);
+        });
+
+        bubble.appendChild(fuDiv);
+      }
+
+      ui.messages.appendChild(wrap);
+
+      if (ui.chat) {
+        ui.chat.scrollTo({
+          top: ui.chat.scrollHeight,
+          behavior: "smooth"
+        });
+      }
+    }
+
+    function addSystem(text) {
+      addMsg("ai", text);
+    }
+
+    function formatHistoryDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleDateString([], { month: "short", day: "numeric" });
+    }
+
+    function findModule(moduleId) {
+      return state.modules.find(mod => mod.module_id === moduleId || mod.id === moduleId) || null;
+    }
+
+    function findChapter(chapterId) {
+      for (const chapters of Object.values(state.chaptersByModule)) {
+        const found = (chapters || []).find(ch => (ch.chapter_id || ch.id) === chapterId);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    async function restoreToolContextFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("openChat") !== "1") return false;
+
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem("skillfind:selectedContext") || "{}"); } catch {}
+
+      const moduleId = params.get("moduleId") || saved.moduleId || "";
+      const chapterId = params.get("chapterId") || saved.chapterId || "";
+      if (!moduleId || !chapterId) return false;
+
+      const module = findModule(moduleId);
+      if (!module) return false;
+
+      const chapter = await ensureChapterLoaded(moduleId, chapterId);
+      if (!chapter) return false;
+
+      state.selectedModuleId = module.module_id || module.id;
+      state.selectedModuleLabel = module.name;
+      state.openModuleId = state.selectedModuleId;
+      state.selectedChapterId = chapter.chapter_id || chapter.id;
+      state.selectedChapterData = chapter;
+      state.selectedChapterLabel = chapter.chapter_title || params.get("chapterTitle") || saved.chapterTitle || "Chapter";
+      state.flowStep = "learning";
+      state.conversationId = `conv_${state.selectedModuleId}_${state.selectedChapterId}_${Date.now()}`;
+
+      renderTree();
+      renderLearningInterface();
+      return true;
+    }
+
+    function renderChatHistory() {
+      if (!ui.chatHistoryList) return;
+      clearNode(ui.chatHistoryList);
+
+      if (!state.conversations.length) {
+        const empty = document.createElement("div");
+        empty.className = "treeEmpty";
+        empty.textContent = "No saved chats yet.";
+        ui.chatHistoryList.appendChild(empty);
+        return;
+      }
+
+      for (const conversation of state.conversations) {
+        const module = findModule(conversation.moduleId);
+        const chapter = findChapter(conversation.chapterId);
+        const titleText = conversation.firstUserMessage || conversation.title || chapter?.chapter_title || module?.name || "Saved chat";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "history-item" + (conversation.conversationId === state.conversationId ? " active" : "");
+
+        const title = document.createElement("div");
+        title.className = "history-title";
+        title.textContent = titleText;
+
+        const preview = document.createElement("div");
+        preview.className = "history-preview";
+        preview.textContent = conversation.lastMessage || "Open conversation";
+
+        const meta = document.createElement("div");
+        meta.className = "history-meta";
+        meta.textContent = `${conversation.messageCount || 0} messages${conversation.lastAt ? ` • ${formatHistoryDate(conversation.lastAt)}` : ""}`;
+
+        btn.appendChild(title);
+        btn.appendChild(preview);
+        btn.appendChild(meta);
+        btn.addEventListener("click", () => loadConversation(conversation.conversationId));
+        ui.chatHistoryList.appendChild(btn);
+      }
+    }
+
+    async function loadChatHistoryList() {
+      try {
+        const json = await apiFetch(`${API_CHAT_CONVERSATIONS}?limit=200`);
+        state.conversations = json.conversations || [];
+        renderChatHistory();
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+        if (ui.chatHistoryList) {
+          ui.chatHistoryList.innerHTML = `<div class="treeEmpty">History unavailable.</div>`;
+        }
+      }
+    }
+
+    async function ensureChapterLoaded(moduleId, chapterId) {
+      let chapters = state.chaptersByModule[moduleId];
+      if (!chapters) {
+        const json = await apiFetch(`${API_CHAPTERS}?moduleId=${encodeURIComponent(moduleId)}`);
+        chapters = json.chapters || [];
+        state.chaptersByModule[moduleId] = chapters;
+      }
+      return (chapters || []).find(ch => (ch.chapter_id || ch.id) === chapterId) || null;
+    }
+
+    async function loadConversation(conversationId) {
+      setStatus("Loading chat history...");
+      try {
+        const json = await apiFetch(`${API_CHAT_MESSAGES}?conversationId=${encodeURIComponent(conversationId)}`);
+        const messages = json.messages || [];
+        if (!messages.length) {
+          setStatus("No messages found for this chat.");
+          return;
+        }
+
+        const first = messages.find(msg => msg.module_id || msg.chapter_id) || messages[0];
+        const module = findModule(first.module_id);
+        const chapter = first.chapter_id ? await ensureChapterLoaded(first.module_id, first.chapter_id) : null;
+
+        if (!module || !chapter) {
+          setStatus("This saved chat is missing its module or chapter context.");
+          return;
+        }
+
+        state.selectedModuleId = module.module_id;
+        state.selectedModuleLabel = module.name;
+        state.openModuleId = module.module_id;
+        state.selectedChapterId = chapter.chapter_id || chapter.id;
+        state.selectedChapterData = chapter;
+        state.selectedChapterLabel = chapter.chapter_title || "Chapter";
+        state.conversationId = conversationId;
+        state.flowStep = "learning";
+        state.loadingConversation = true;
+
+        renderTree();
+        renderLearningInterface();
+        state.loadingConversation = false;
+        clearMessages();
+
+        for (const msg of messages) {
+          addMsg(msg.role === "user" ? "user" : "ai", msg.content || "");
+        }
+
+        renderChatHistory();
+        closeSidebar();
+        setStatus("Chat history loaded.");
+      } catch (error) {
+        state.loadingConversation = false;
+        setStatus(`History error: ${error.message}`);
+      }
+    }
+
+    function startNewChat() {
+      if (!state.selectedModuleId || !state.selectedChapterId) {
+        addSystem("Select a module and chapter before starting a new chat.");
+        return;
+      }
+
+      state.conversationId = `conv_${state.selectedModuleId}_${state.selectedChapterId}_${Date.now()}`;
+      clearMessages();
+      addSystem(`👋 New chat started for **${state.selectedChapterLabel || "this chapter"}**.`);
+      renderChatHistory();
+      if (ui.keyword) ui.keyword.focus();
+    }
+
+    async function ask() {
+      const q = ui.keyword ? ui.keyword.value.trim() : "";
+
+      if (!q) return;
+
+      if (!state.selectedModuleId || !state.selectedChapterId) {
+        addSystem("⚠️ Please select a module and chapter first.");
+        return;
+      }
+
+      ui.keyword.value = "";
+      addMsg("user", q);
+
+      const payload = {
+        keyword: q,
+        moduleId: state.selectedModuleId,
+        chapterId: state.selectedChapterId,
+        conversationId:
+          state.conversationId ||
+          `conv_${state.selectedModuleId}_${state.selectedChapterId}_${Date.now()}`
+      };
+
+      try {
+        ui.btnAsk.disabled = true;
+        addMsg("ai", "🤔 Thinking...");
+
+        const token = await getToken();
+
+        if (!token) {
+          window.location.replace("login.html");
+          return;
+        }
+
+        const res = await fetch(API_ASK, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const raw = await res.text();
+
+        const lastMsg = ui.messages.lastElementChild;
+
+        if (
+          lastMsg &&
+          lastMsg.classList.contains("ai") &&
+          lastMsg.querySelector(".bubble") &&
+          lastMsg.querySelector(".bubble").innerText.includes("Thinking...")
+        ) {
+          ui.messages.removeChild(lastMsg);
+        }
+
+        let json = null;
+
+        try {
+          json = JSON.parse(raw);
+        } catch (error) {
+          throw new Error("Invalid server response.");
+        }
+
+        if (!res.ok) {
+          throw new Error(json.message || json.error || "Request failed.");
+        }
+
+        if (json.conversationId) {
+          state.conversationId = json.conversationId;
+        }
+
+        addMsg("ai", json.answer || "No answer provided.", {
+          followUps: json.followUpQuestions || [],
+          display: json.display || null
+        });
+
+        loadChatHistoryList();
+
+        if (ui.debug) {
+          ui.debug.textContent = JSON.stringify(json, null, 2);
+        }
+      } catch (error) {
+        addMsg("ai", `⚠️ Error: ${error.message}`);
+      } finally {
+        ui.btnAsk.disabled = false;
+      }
+    }
+
+    async function selectModule(module) {
+      state.selectedModuleId = module.module_id;
+      state.selectedModuleLabel = module.name;
+      state.selectedChapterId = null;
+      state.selectedChapterData = null;
+      state.selectedChapterLabel = null;
+      state.flowStep = "chapters";
+      state.openModuleId = module.module_id;
+
+      renderTree();
+      await renderChaptersGrid();
+    }
+
+    async function renderChaptersGrid() {
+      updateTopbarContext();
+      hideComposer();
+      clearMessages();
+
+      const moduleName = state.selectedModuleLabel || "Module";
+
+      ui.chatContent.innerHTML = `
+        <div class="step-flow">
+          <button class="back-button" id="backToModulesBtn">← Back to Modules</button>
+          <div class="step-title">📖 ${escapeHtml(moduleName)} · Pick Chapter</div>
+          <div class="chapters-grid" id="chaptersGrid"></div>
+        </div>
+      `;
+
+      $("backToModulesBtn").addEventListener("click", () => {
+        state.selectedModuleId = null;
+        state.selectedModuleLabel = null;
+        state.flowStep = "modules";
+        renderModulesGrid();
+        renderTree();
+        updateTopbarContext();
+      });
+
+      const grid = $("chaptersGrid");
+      setStatus("Loading chapters...");
+
+      try {
+        let chapters = state.chaptersByModule[state.selectedModuleId];
+
+        if (!chapters) {
+          const json = await apiFetch(
+            `${API_CHAPTERS}?moduleId=${encodeURIComponent(state.selectedModuleId)}`
+          );
+
+          chapters = json.chapters || [];
+          state.chaptersByModule[state.selectedModuleId] = chapters;
+          renderChatHistory();
+        }
+
+        setStatus("");
+
+        if (!chapters.length) {
+          grid.innerHTML = `<div class="treeEmpty">No chapters yet.</div>`;
+          return;
+        }
+
+        chapters.forEach(ch => {
+          const card = document.createElement("div");
+          card.className = "chapter-card";
+
+          const num = ch.chapter_number || "";
+          const title = ch.chapter_title || "Chapter";
+
+          card.innerHTML = `
+            <div class="chapter-number" style="color:var(--accent);font-size:12px;">
+              ${num ? `Chapter ${num}` : ""}
+            </div>
+            <div class="chapter-title" style="font-weight:600;">
+              ${escapeHtml(title)}
+            </div>
+          `;
+
+          card.addEventListener("click", () => selectChapter(ch));
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        setStatus(`Error: ${error.message}`);
+        grid.innerHTML = `<div class="treeEmpty">Failed to load chapters.</div>`;
+      }
+    }
+
+    function selectChapter(chapter) {
+      state.selectedChapterId = chapter.chapter_id || chapter.id;
+      state.selectedChapterData = chapter;
+      state.selectedChapterLabel = chapter.chapter_title || "Chapter";
+      state.flowStep = "learning";
+
+      if (!state.loadingConversation) {
+        state.conversationId = null;
+      }
+
+      renderTree();
+      renderLearningInterface();
+      closeSidebar();
+    }
+
+    function renderLearningInterface() {
+      updateTopbarContext();
+
+      const chapterTitle = state.selectedChapterLabel || "Chapter";
+
+      ui.chatContent.innerHTML = `
+        <div class="learning-interface">
+          <button class="back-button" id="backToChaptersBtn">← Back to Chapters</button>
+
+          <div 
+            id="learningEmptyState" 
+            class="empty" 
+            style="background:rgba(0,0,0,.2);border-radius:28px;padding:20px;margin-bottom:20px;"
+          >
+            <div class="emptyIcon" style="font-size:40px;">🎯</div>
+            <div class="emptyTitle" style="font-size:20px;font-weight:800;">
+              Start Learning
+            </div>
+            <div class="emptySub" style="color:var(--muted);">
+              Ask questions about ${escapeHtml(chapterTitle)}
+            </div>
+
+            <div class="quickGrid" style="margin-top:12px;">
+              <button class="chip" data-q="Explain key concepts of this chapter">Key Concepts</button>
+              <button class="chip" data-q="Give me a summary">Summary</button>
+              <button class="chip" data-q="Create a practice quiz">Quiz</button>
+            </div>
+          </div>
+
+          <div class="messages" id="messages"></div>
+        </div>
+      `;
+
+      ui.messages = $("messages");
+
+      $("backToChaptersBtn").addEventListener("click", () => {
+        state.flowStep = "chapters";
+        renderChaptersGrid();
+        updateTopbarContext();
+      });
+
+      document.querySelectorAll(".chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          ui.keyword.value = btn.getAttribute("data-q") || "";
+          ui.keyword.focus();
+        });
+      });
+
+      showComposer();
+      clearMessages();
+
+      addSystem(`👋 Welcome to **${chapterTitle}**! I'm your AI tutor. Ask anything to master this chapter.`);
+
+      if (!state.conversationId) {
+        state.conversationId = `conv_${state.selectedModuleId}_${state.selectedChapterId}_${Date.now()}`;
+      }
+    }
+
+    function renderModulesGrid() {
+      updateTopbarContext();
+      hideComposer();
+      clearMessages();
+
+      ui.chatContent.innerHTML = `
+        <div class="step-flow">
+          <div class="step-title">📚 Choose a Module</div>
+          <div class="modules-grid" id="modulesGrid"></div>
+        </div>
+      `;
+
+      const grid = $("modulesGrid");
+
+      if (!state.modules.length) {
+        grid.innerHTML = `<div class="treeEmpty">No modules found for this student.</div>`;
+        return;
+      }
+
+      state.modules.forEach(mod => {
+        const card = document.createElement("div");
+        card.className = "module-card";
+
+        card.innerHTML = `
+          <div class="module-icon">${getModuleIcon(mod.name || "")}</div>
+          <div class="module-name">${escapeHtml(mod.name)}</div>
+          <div class="course-name" style="font-size:12px;color:var(--muted)">
+            ${escapeHtml(mod.course_name || "Course")}
+          </div>
+        `;
+
+        card.addEventListener("click", () => selectModule(mod));
+        grid.appendChild(card);
+      });
+    }
+
+    function getModuleIcon(name) {
+      const v = String(name || "").toLowerCase();
+
+      if (v.includes("python")) return "🐍";
+      if (v.includes("javascript")) return "⚡";
+      if (v.includes("data")) return "📊";
+      if (v.includes("ai")) return "🤖";
+
+      return "📖";
+    }
+
+    async function renderTree() {
+      clearNode(ui.modulesTree);
+
+      for (const m of state.modules) {
+        const div = document.createElement("div");
+        div.className = "treeItem" + (state.openModuleId === m.module_id ? " open" : "");
+
+        const head = document.createElement("button");
+        head.type = "button";
+        head.className = "treeHead";
+        head.textContent = `${state.openModuleId === m.module_id ? "▾" : "▸"} ${m.name}`;
+
+        const childrenDiv = document.createElement("div");
+        childrenDiv.className = "treeChildren";
+
+        if (state.openModuleId === m.module_id) {
+          const chaps = state.chaptersByModule[m.module_id] || [];
+
+          if (chaps.length) {
+            chaps.forEach(ch => {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "treeChildBtn";
+
+              btn.textContent = `${ch.chapter_number ? `Ch${ch.chapter_number}: ` : ""}${ch.chapter_title || "Chapter"}`;
+
+              btn.addEventListener("click", event => {
+                event.stopPropagation();
+
+                state.selectedModuleId = m.module_id;
+                state.selectedModuleLabel = m.name;
+
+                selectChapter(ch);
+              });
+
+              childrenDiv.appendChild(btn);
+            });
+          } else {
+            childrenDiv.innerHTML = `<div class="treeEmpty">No chapters loaded.</div>`;
+          }
+        }
+
+        head.addEventListener("click", async event => {
+          event.stopPropagation();
+
+          const willOpen = state.openModuleId !== m.module_id;
+          state.openModuleId = willOpen ? m.module_id : null;
+
+          renderTree();
+
+          if (willOpen && !state.chaptersByModule[m.module_id]) {
+            try {
+              const json = await apiFetch(
+                `${API_CHAPTERS}?moduleId=${encodeURIComponent(m.module_id)}`
+              );
+
+              state.chaptersByModule[m.module_id] = json.chapters || [];
+              renderTree();
+              renderChatHistory();
+            } catch (error) {
+              console.error("Failed to load tree chapters:", error);
+            }
+          }
+        });
+
+        div.appendChild(head);
+        div.appendChild(childrenDiv);
+        ui.modulesTree.appendChild(div);
+      }
+    }
+
+    async function boot(authData) {
+      setStatus("Loading modules...");
+
+      const user = authData.user;
+      const profile = authData.profile;
+
+      ui.whoami.textContent = profile.full_name || user.email || user.id;
+
+      try {
+        const json = await apiFetch(API_MODULES);
+        state.modules = json.modules || [];
+
+        renderModulesGrid();
+        renderTree();
+        loadChatHistoryList();
+        await restoreToolContextFromUrl();
+
+        setStatus("Ready");
+      } catch (error) {
+        setStatus(`Error: ${error.message}`);
+
+        if (ui.debug) {
+          ui.debug.textContent = error.message;
+        }
+      }
+    }
+
+    function openTool(page) {
+      if (!state.selectedModuleId || !state.selectedChapterId) {
+        addSystem("⚠️ Select a chapter first from modules.");
+        return;
+      }
+
+      const ctx = {
+        moduleId: state.selectedModuleId,
+        moduleName: state.selectedModuleLabel,
+        chapterId: state.selectedChapterId,
+        chapterTitle: state.selectedChapterLabel,
+        chapterNumber: state.selectedChapterData ? state.selectedChapterData.chapter_number || "" : ""
+      };
+
+      try { localStorage.setItem("skillfind:selectedContext", JSON.stringify(ctx)); } catch {}
+      const params = new URLSearchParams(ctx).toString();
+
+      window.location.href = `${page}?${params}`;
+    }
+
+    function openEmbeddedPage(title, page) {
+      closeSidebar();
+      document.querySelectorAll(".study-mode-item").forEach(item => {
+        item.classList.toggle("active", item.textContent.toLowerCase().includes(title.toLowerCase().split(" ")[0]));
+      });
+      if (ui.learningContext) ui.learningContext.style.display = "";
+      if (ui.contextModule) ui.contextModule.textContent = title;
+      if (ui.contextChapter) ui.contextChapter.textContent = "Study Mode";
+      if (ui.actionButtons) ui.actionButtons.style.display = "none";
+      if (ui.btnStudyMenu) ui.btnStudyMenu.style.display = "none";
+      ui.embeddedTitle.textContent = title;
+      ui.embeddedFrame.src = `${page}${page.includes("?") ? "&" : "?"}embedded=1`;
+      ui.embeddedPage.classList.remove("hidden");
+      ui.main.classList.add("embedded-active");
+    }
+
+    function closeEmbeddedPage() {
+      ui.main.classList.remove("embedded-active");
+      ui.embeddedPage.classList.add("hidden");
+      ui.embeddedFrame.removeAttribute("src");
+      document.querySelectorAll(".study-mode-item").forEach(item => item.classList.remove("active"));
+      updateTopbarContext();
+    }
+
+    const sidebar = $("sidebar");
+    const overlay = $("sidebarOverlay");
+
+    $("btnOpenSidebar").addEventListener("click", () => {
+      sidebar.classList.add("open");
+      overlay.classList.add("active");
+    });
+
+    const closeSidebar = () => {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("active");
+    };
+
+    $("btnCloseSidebar").addEventListener("click", closeSidebar);
+    overlay.addEventListener("click", closeSidebar);
+    ui.btnCloseEmbedded.addEventListener("click", closeEmbeddedPage);
+
+    $("btnAsk").addEventListener("click", ask);
+
+    ui.keyword.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        ask();
+      }
+    });
+
+    $("btnReload").addEventListener("click", () => {
+      location.reload();
+    });
+
+    ui.btnStudyMenu.addEventListener("click", event => {
+      event.stopPropagation();
+      if (ui.actionButtons.style.display === "none") return;
+      ui.actionButtons.classList.toggle("open");
+    });
+
+    document.addEventListener("click", event => {
+      if (
+        ui.actionButtons.classList.contains("open") &&
+        !ui.actionButtons.contains(event.target) &&
+        event.target !== ui.btnStudyMenu
+      ) {
+        ui.actionButtons.classList.remove("open");
+      }
+    });
+
+    ui.btnNewChat.addEventListener("click", startNewChat);
+
+    $("btnLogout").addEventListener("click", async () => {
+      localStorage.removeItem("skillfind_user");
+      await sbClient.auth.signOut();
+      location.replace("login.html");
+    });
+
+    $("btnQuiz").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("quiz.html"); });
+    $("btnFlashcard").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("flashcard.html"); });
+    $("btnWordBuilder").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("word-builder.html"); });
+    $("btnChapterStudy").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("chapter-study.html"); });
+    $("btnQuestionPredictor").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("question-predictor.html"); });
+    $("btnInvaderChallenge").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("invader-challenge.html"); });
+    $("examStudySidebarBtn").addEventListener("click", () => {
+      openEmbeddedPage("Exam Study", "exam-study.html");
+    });
+    $("testStudySidebarBtn").addEventListener("click", () => {
+      openEmbeddedPage("Test Study", "test_study.html");
+    });
+    $("myLibrarySidebarBtn").addEventListener("click", () => {
+      openEmbeddedPage("My Library", "library.html");
+    });
+
+    (async () => {
+      try {
+        const authData = await protectStudentPage();
+
+        if (!authData) {
+          return;
+        }
+
+        await boot(authData);
+      } catch (error) {
+        console.error("Index auth error:", error);
+
+        try {
+          await sbClient.auth.signOut();
+        } catch (signOutError) {
+          console.error("Sign out failed:", signOutError);
+        }
+
+        localStorage.removeItem("skillfind_user");
+        window.location.replace("login.html");
+      }
+    })();
+  </script>
+</body>
+</html>

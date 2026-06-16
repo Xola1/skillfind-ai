@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkillFind AI - Invader Challenge</title>
+  <style>
+    :root {
+      --bg: #06101f;
+      --panel: rgba(9, 20, 38, .78);
+      --panel2: rgba(255,255,255,.07);
+      --line: rgba(255,255,255,.13);
+      --text: #f4f8ff;
+      --muted: rgba(244,248,255,.68);
+      --brand: #8ab4ff;
+      --brand2: #a6ffda;
+      --danger: #ff7a7a;
+      --warn: #ffd166;
+      --ship: #7dd3fc;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(138,180,255,.22), transparent 32%),
+        radial-gradient(circle at 80% 0%, rgba(166,255,218,.13), transparent 28%),
+        linear-gradient(180deg, #08172b, #030711 70%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .stars, .stars::before, .stars::after {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(#fff 1px, transparent 1px),
+        radial-gradient(rgba(166,255,218,.8) 1px, transparent 1px);
+      background-size: 80px 80px, 130px 130px;
+      background-position: 0 0, 30px 40px;
+      opacity: .42;
+      animation: drift 26s linear infinite;
+    }
+    .stars::before, .stars::after { content: ""; }
+    .stars::before { transform: scale(1.5); opacity: .28; animation-duration: 38s; }
+    .stars::after { transform: scale(.75); opacity: .5; animation-duration: 18s; }
+    @keyframes drift { to { background-position: 0 900px, 30px 940px; } }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3, 7, 17, .72);
+      backdrop-filter: blur(16px);
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      font-weight: 800;
+    }
+    .btn.primary {
+      border: 0;
+      color: #06101f;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border-radius: 14px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .context { min-width: 0; margin-right: auto; }
+    .context-title { font-weight: 950; letter-spacing: .01em; }
+    .context-sub { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .top-question {
+      flex: 1 1 auto;
+      min-width: 220px;
+      max-width: 720px;
+      border: 1px solid rgba(166,255,218,.24);
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+      padding: 9px 12px;
+    }
+    .top-question-meta { color: var(--brand2); font-size: 11px; font-weight: 850; margin-bottom: 3px; }
+    .top-question-text {
+      font-size: clamp(13px, 1.8vw, 17px);
+      font-weight: 850;
+      line-height: 1.25;
+      max-height: 44px;
+      overflow: hidden;
+    }
+
+    @media (min-width: 621px) {
+      .top-question {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
+        z-index: 9;
+        max-width: none;
+        min-height: 56px;
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        background: rgba(3, 7, 17, .76);
+        backdrop-filter: blur(16px);
+        padding: 8px 14px;
+      }
+
+      .shell {
+        padding-top: 120px;
+      }
+
+      .arena-wrap {
+        height: calc(100vh - 120px);
+      }
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100vh;
+      padding-top: 64px;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .arena-wrap, .side-panel, .setup {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 18px 50px rgba(0,0,0,.36);
+      backdrop-filter: blur(14px);
+    }
+
+    .setup {
+      width: min(1180px, calc(100% - 28px));
+      align-self: center;
+      justify-self: center;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .setup h1 { margin: 0; font-size: clamp(28px, 5vw, 48px); line-height: 1; }
+    .setup p { margin: 0; color: var(--muted); line-height: 1.55; max-width: 760px; }
+    .settings { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
+    .settings select {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0b1728;
+      color: var(--text);
+      padding: 9px 12px;
+    }
+
+    .arena-wrap {
+      height: calc(100vh - 64px);
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .hud {
+      order: 2;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(86px, 1fr));
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      padding: 8px 10px;
+      min-width: 0;
+    }
+    .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-value { font-size: 18px; font-weight: 950; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .live-lives {
+      position: fixed;
+      right: 14px;
+      bottom: 76px;
+      z-index: 8;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      min-width: 64px;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      background: rgba(3, 7, 17, .78);
+      color: var(--text);
+      font-weight: 950;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+    }
+
+    .game-active .live-lives {
+      display: inline-flex;
+    }
+
+    .live-lives-label {
+      color: var(--danger);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .arena {
+      order: 1;
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(138,180,255,.14), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.20));
+    }
+
+    .arena::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(#fff 1px, transparent 1px),
+        radial-gradient(rgba(166,255,218,.75) 1px, transparent 1px);
+      background-size: 72px 72px, 118px 118px;
+      background-position: 0 0, 24px 36px;
+      opacity: .34;
+      z-index: 0;
+      animation: arenaStars 16s linear infinite;
+    }
+
+    .arena::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(6,16,31,.14), rgba(6,16,31,.34)),
+        radial-gradient(circle at 50% 80%, rgba(138,180,255,.10), transparent 35%);
+      z-index: 0;
+    }
+
+    @keyframes arenaStars {
+      to { background-position: 0 760px, 24px 796px; }
+    }
+
+    .question-card {
+      display: none;
+    }
+    .question-meta { color: var(--brand2); font-size: 12px; font-weight: 850; margin-bottom: 6px; }
+    .question-text { font-size: clamp(15px, 2vw, 20px); font-weight: 850; line-height: 1.35; }
+
+    .enemy {
+      position: absolute;
+      z-index: 2;
+      top: 18px;
+      width: min(220px, 42vw);
+      height: 70px;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      border: 1px solid rgba(138,180,255,.38);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(138,180,255,.18), rgba(166,255,218,.10));
+      color: var(--text);
+      padding: 9px 11px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.28);
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+    }
+    .enemy.waiting {
+      opacity: 0;
+    }
+    .enemy-key { color: var(--brand2); font-weight: 950; font-size: 12px; }
+    .enemy-text {
+      font-weight: 850;
+      line-height: 1.25;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .enemy.hit { animation: blast .24s ease forwards; border-color: var(--brand2); }
+    .enemy.danger { border-color: rgba(255,122,122,.55); background: rgba(255,122,122,.16); }
+    @keyframes fall { to { transform: translateY(calc(100vh - 260px)); } }
+    @keyframes blast { to { transform: scale(1.42); opacity: 0; filter: blur(3px); } }
+
+    .laser {
+      position: absolute;
+      z-index: 4;
+      width: 0;
+      height: 5px;
+      border-radius: 999px;
+      transform-origin: 0 50%;
+      background: linear-gradient(90deg, #fff, var(--brand2), rgba(166,255,218,.05));
+      box-shadow: 0 0 18px var(--brand2);
+      animation: laser .26s ease-out forwards;
+    }
+    @keyframes laser { to { width: var(--laser-distance, 360px); opacity: 0; } }
+
+    .explosion {
+      position: absolute;
+      z-index: 5;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(circle, #fff 0 12%, var(--brand2) 13% 28%, rgba(255,209,102,.9) 29% 42%, transparent 43%);
+      animation: pop .34s ease-out forwards;
+    }
+    @keyframes pop { to { transform: scale(1.8); opacity: 0; } }
+
+    .ship {
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: 18px;
+      width: 58px;
+      height: 46px;
+      transform: translateX(-50%);
+      filter: drop-shadow(0 0 18px rgba(125,211,252,.5));
+      cursor: pointer;
+    }
+    .ship::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(50% 0, 78% 64%, 100% 88%, 65% 82%, 50% 100%, 35% 82%, 0 88%, 22% 64%);
+      background: linear-gradient(180deg, #dff7ff, var(--ship) 48%, #2563eb);
+      border: 1px solid rgba(255,255,255,.38);
+    }
+    .ship::after {
+      content: "";
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: -13px;
+      height: 22px;
+      border-radius: 999px;
+      background: radial-gradient(circle, var(--warn), transparent 70%);
+      animation: thrust .4s ease-in-out infinite alternate;
+    }
+    @keyframes thrust { to { transform: scaleY(1.35); opacity: .62; } }
+
+    .typebar {
+      order: 3;
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(0,0,0,.25);
+    }
+    .typebar input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      padding: 12px 14px;
+      outline: none;
+    }
+    .typebar input:focus { border-color: rgba(166,255,218,.55); }
+
+    .side-panel {
+      width: min(1180px, calc(100% - 28px));
+      margin: 16px auto 22px;
+      padding: 14px;
+      align-self: start;
+      display: grid;
+      gap: 14px;
+    }
+    .leader-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(220px, .8fr) minmax(220px, .8fr);
+      gap: 14px;
+    }
+    .game-active .shell > .side-panel {
+      display: none;
+    }
+    .panel-title { font-weight: 950; font-size: 16px; }
+    .leader-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .leader-tabs button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .leader-tabs button.active { background: rgba(166,255,218,.16); border-color: rgba(166,255,218,.42); }
+    .list { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.045);
+      padding: 9px;
+      font-size: 13px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      background: rgba(166,255,218,.12);
+      color: var(--brand2);
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+    .overlay {
+      position: absolute;
+      z-index: 9;
+      inset: 16px;
+      overflow: auto;
+      border: 1px solid rgba(166,255,218,.28);
+      border-radius: 18px;
+      background: rgba(3, 7, 17, .92);
+      backdrop-filter: blur(14px);
+      padding: 18px;
+    }
+    .overlay-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .overlay-title {
+      font-size: clamp(24px, 4vw, 40px);
+      font-weight: 950;
+      line-height: 1;
+    }
+    .pause-countdown {
+      color: var(--warn);
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .result {
+      position: absolute;
+      z-index: 8;
+      inset: 24px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid rgba(166,255,218,.32);
+      border-radius: 18px;
+      background: rgba(3, 7, 17, .88);
+      padding: 20px;
+    }
+    .result h2 { margin: 0 0 10px; font-size: clamp(28px, 5vw, 46px); }
+    .result-grid {
+      width: min(520px, 100%);
+      margin: 14px auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .result-grid .stat { text-align: left; }
+
+    @media (min-width: 621px) {
+      .shell {
+        padding-top: 120px;
+      }
+
+      .arena-wrap {
+        height: calc(100vh - 120px);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .hud { grid-template-columns: repeat(3, 1fr); }
+      .leader-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      body { height: 100dvh; }
+      .topbar { min-height: 112px; align-items: flex-start; flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
+      .topbar .btn:not(.icon-btn) { flex: 1 1 46%; }
+      .topbar .icon-btn { flex: 0 0 44px; }
+      .top-question { order: 4; flex-basis: 100%; max-width: none; }
+      .shell { height: 100dvh; padding-top: 112px; }
+      .arena-wrap { height: calc(100dvh - 112px); }
+      .game-active .hud { display: none; }
+      body.game-active #pauseBtn { display: none !important; }
+      body.game-active .typebar { display: none; }
+      .hud { grid-template-columns: repeat(2, 1fr); padding: 8px; }
+      .stat-value { font-size: 16px; }
+      .enemy { width: min(180px, 46vw); height: 64px; font-size: 12px; padding: 8px; }
+      .ship { width: 50px; height: 40px; bottom: 14px; }
+      .live-lives { right: 10px; bottom: 64px; min-height: 34px; padding: 7px 9px; }
+      .typebar { display: grid; grid-template-columns: 1fr; }
+      .result { inset: 10px; }
+      .result-grid { grid-template-columns: 1fr; }
+      .overlay { inset: 8px; padding: 12px; }
+      .overlay-head { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 620px) {
+      body:not(.game-active) {
+        height: auto;
+        min-height: 100dvh;
+        overflow-y: auto;
+      }
+
+      .topbar {
+        min-height: 92px;
+        max-height: 46dvh;
+        overflow: auto;
+      }
+
+      .context {
+        flex: 1 1 calc(100% - 54px);
+        margin-right: 0;
+      }
+
+      .top-question {
+        order: 5;
+        flex-basis: 100%;
+        max-height: 54px;
+        overflow: hidden;
+        padding: 7px 10px;
+      }
+
+      .top-question-text {
+        max-height: 34px;
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      .shell {
+        min-height: 100dvh;
+        height: auto;
+        padding-top: 104px;
+      }
+
+      .setup {
+        width: calc(100% - 20px);
+        margin: 10px auto 16px;
+        padding: 14px;
+        gap: 12px;
+      }
+
+      .setup h1 {
+        font-size: 28px;
+      }
+
+      .arena-wrap {
+        min-height: calc(100dvh - 104px);
+        height: calc(100dvh - 104px);
+      }
+
+      body.game-active {
+        height: 100dvh;
+        overflow: hidden;
+      }
+
+      body.game-active .topbar {
+        min-height: 58px;
+        max-height: 58px;
+        align-items: center;
+        overflow: visible;
+      }
+
+      body.game-active .context-sub {
+        display: none;
+      }
+
+      body.game-active .top-question {
+        position: fixed;
+        top: 58px;
+        left: 0;
+        right: 0;
+        z-index: 9;
+        display: block;
+        max-height: none;
+        min-height: 0;
+        width: 100%;
+        padding: 8px 10px 10px;
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        background: rgba(3, 7, 17, .86);
+        backdrop-filter: blur(12px);
+      }
+
+      body.game-active .top-question-text {
+        max-height: none;
+        overflow: visible;
+      }
+
+      body.game-active .shell {
+        height: 100dvh;
+        min-height: 100dvh;
+        padding-top: 58px;
+      }
+
+      body.game-active .arena-wrap {
+        height: calc(100dvh - 58px);
+        min-height: calc(100dvh - 58px);
+      }
+
+      body.game-active .arena {
+        min-height: calc(100dvh - 58px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <header class="topbar">
+    <button class="btn icon-btn" type="button" onclick="goBackToLearning()" aria-label="Go back" title="Go back">&lsaquo;</button>
+    <div class="context">
+      <div class="context-title">🚀 Invader Challenge</div>
+      <div class="context-sub" id="contextLine">Loading chapter...</div>
+    </div>
+    <div class="top-question">
+      <div class="top-question-meta" id="questionMeta">Mission setup</div>
+      <div class="top-question-text" id="questionText">Choose a challenge mode to begin.</div>
+    </div>
+    <button class="btn hidden" type="button" id="pauseBtn">Pause</button>
+    <button class="btn" type="button" id="profileBtn">Leaderboard</button>
+  </header>
+
+  <main class="shell">
+    <section class="setup" id="setup">
+      <h1>Defend Your Chapter</h1>
+      <p>Answer invaders fall from orbit. Type the correct option key or answer text, fire the laser, earn XP, and climb the leaderboard.</p>
+      <div class="settings">
+        <select id="questionCount">
+          <option value="5">5 Questions</option>
+          <option value="10" selected>10 Questions</option>
+          <option value="15">15 Questions</option>
+        </select>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button class="btn primary" type="button" id="startBtn">Start Challenge</button>
+        <button class="btn" type="button" id="bossBtn">Boss Battle</button>
+      </div>
+      <div class="muted" id="setupStatus">Normal rounds use the existing quiz generator. Boss Battle uses predictor data when available.</div>
+    </section>
+
+    <section class="arena-wrap hidden" id="gameWrap">
+      <div class="hud">
+        <div class="stat"><div class="stat-label">Score</div><div class="stat-value" id="score">0</div></div>
+        <div class="stat"><div class="stat-label">XP</div><div class="stat-value" id="xp">0</div></div>
+        <div class="stat"><div class="stat-label">Accuracy</div><div class="stat-value" id="accuracy">100%</div></div>
+        <div class="stat"><div class="stat-label">Lives</div><div class="stat-value" id="lives">3</div></div>
+        <div class="stat"><div class="stat-label">Level</div><div class="stat-value" id="level">1</div></div>
+        <div class="stat"><div class="stat-label">Mode</div><div class="stat-value" id="modeLabel">Standard</div></div>
+      </div>
+      <div class="arena" id="arena">
+        <div class="ship" id="ship" aria-hidden="true"></div>
+      </div>
+      <div class="live-lives" aria-live="polite">
+        <span class="live-lives-label">❤</span>
+        <span id="liveLives">3</span>
+      </div>
+      <div class="typebar">
+        <input id="answerInput" autocomplete="off" placeholder="Type A, TRUE, FALSE, or the correct answer..." />
+        <button class="btn primary" id="fireBtn" type="button">Fire</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="frontend/config.js"></script>
+  <script>
+    const API_BASE = "http://localhost:5050";
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const el = id => document.getElementById(id);
+    const letters = ["A", "B", "C", "D", "E", "F"];
+
+    const state = {
+      questions: [],
+      current: 0,
+      enemies: [],
+      score: 0,
+      xp: 0,
+      lives: 3,
+      correct: 0,
+      correctStreak: 0,
+      attempts: 0,
+      level: 1,
+      startTime: null,
+      pausedMs: 0,
+      pauseStartedAt: null,
+      questionStartedAt: null,
+      missDuration: 0,
+      missRemaining: 0,
+      pauseCountdownTimer: null,
+      gameMode: "standard",
+      active: false,
+      paused: false,
+      spawnTimer: null,
+      missTimer: null,
+      moduleSkills: [],
+      skillHits: {},
+      lastArenaTapAt: 0,
+      loadingMoreQuestions: false
+    };
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]);
+    }
+
+    function getSavedContext() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem("skillfind:selectedContext") || "{}"); } catch { saved = {}; }
+      const p = new URLSearchParams(window.location.search);
+      return {
+        moduleId: p.get("moduleId") || saved.moduleId || "",
+        moduleName: p.get("moduleName") || saved.moduleName || "Module",
+        chapterId: p.get("chapterId") || saved.chapterId || "",
+        chapterTitle: p.get("chapterTitle") || saved.chapterTitle || "Chapter",
+        chapterNumber: p.get("chapterNumber") || saved.chapterNumber || "",
+        chapterIds: p.get("chapterIds") || saved.chapterIds || "",
+        source: p.get("source") || saved.source || ""
+      };
+    }
+
+    const ctx = getSavedContext();
+
+    function contextLabel() {
+      return `${ctx.moduleName} ${ctx.chapterNumber ? `Chapter ${ctx.chapterNumber}: ` : ""}${ctx.chapterTitle}`.trim();
+    }
+
+    function goBackToLearning() {
+      try { localStorage.setItem("skillfind:selectedContext", JSON.stringify(ctx)); } catch {}
+      const params = new URLSearchParams({ openChat: "1", ...ctx });
+      window.location.href = `index.html?${params.toString()}`;
+    }
+
+    function openLeaderboard() {
+      const params = new URLSearchParams();
+      Object.entries(ctx).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+      });
+      window.location.href = `invader-leaderboard.html?${params.toString()}`;
+    }
+
+    async function getToken() {
+      const { data } = await sb.auth.getSession();
+      return data?.session?.access_token || localStorage.getItem("supabase_token") || "";
+    }
+
+    async function requireAuth() {
+      const { data } = await sb.auth.getSession();
+      if (!data?.session) {
+        window.location.href = "login.html";
+        return false;
+      }
+      localStorage.setItem("supabase_token", data.session.access_token);
+      return true;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+
+    function normalizeText(value) {
+      return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function isMobileGameControl() {
+      return window.matchMedia("(max-width: 620px)").matches;
+    }
+
+    function normalizeOptions(question) {
+      const type = question.type || question.question_type;
+      if (type === "term_definition") {
+        const term = String(question.term || question.correct_answer || "").trim();
+        const definition = normalizeText(question.definition || question.question_text || question.text);
+        const rawOptions = Array.isArray(question.options)
+          ? question.options
+          : question.options && typeof question.options === "object"
+            ? Object.values(question.options)
+            : [];
+        const termOptions = rawOptions
+          .map(String)
+          .map(value => value.trim())
+          .filter(Boolean)
+          .filter(value => normalizeText(value) !== definition)
+          .filter(value => value.length <= 48)
+          .filter(value => !/[.!?]\s*$/.test(value));
+        const uniqueTerms = [...new Set([term, ...termOptions].filter(Boolean))];
+        return uniqueTerms.length >= 2
+          ? uniqueTerms
+          : [term, "Related term", "Key concept", "Different term"].filter(Boolean);
+      }
+      if (Array.isArray(question.options)) return question.options.map(String).filter(Boolean);
+      if (question.options && typeof question.options === "object") return Object.values(question.options).map(String).filter(Boolean);
+      if (type === "truefalse" || type === "true_false") return ["True", "False"];
+      if (question.correct_answer) return [String(question.correct_answer), "Review the notes", "Skip this concept", "None of these"];
+      return ["Correct concept", "Related distractor", "Unrelated distractor", "None of these"];
+    }
+
+    function getCorrectIndex(question, options) {
+      if (Number.isInteger(question.correct)) return Math.max(0, Math.min(options.length - 1, question.correct));
+      const raw = question.correct_answer ?? question.answer ?? question.correct;
+      if ((question.type === "term_definition" || question.question_type === "term_definition") && question.term) {
+        const termIndex = options.findIndex(opt => normalizeText(opt) === normalizeText(question.term));
+        if (termIndex >= 0) return termIndex;
+      }
+      if (typeof raw === "number") return Math.max(0, Math.min(options.length - 1, raw));
+      const rawText = normalizeText(raw);
+      if (!rawText) return 0;
+      const letterIndex = letters.findIndex(letter => normalizeText(letter) === rawText);
+      if (letterIndex >= 0 && letterIndex < options.length) return letterIndex;
+      const optionIndex = options.findIndex(opt => normalizeText(opt) === rawText);
+      return optionIndex >= 0 ? optionIndex : 0;
+    }
+
+    function adaptQuestion(question, index) {
+      const options = normalizeOptions(question).slice(0, 6);
+      const correctIndex = getCorrectIndex(question, options);
+      const type = question.type || question.question_type || "mcq";
+      return {
+        id: question.id || `q-${index}`,
+        type,
+        text: type === "term_definition"
+          ? question.definition || question.question_text || question.text || "Choose the correct term for this definition."
+          : question.text || question.question_text || question.question || "Choose the correct answer.",
+        options,
+        correctIndex,
+        correctText: options[correctIndex] || options[0] || "",
+        explanation: question.explanation || "",
+        difficulty: question.difficulty || question.difficulty_level || "medium"
+      };
+    }
+
+    function isInvaderQuestion(question) {
+      const type = question.type || "";
+      const allowed = new Set(["truefalse", "true_false", "missing_word", "term_definition"]);
+      return allowed.has(type) && question.options.length >= 2;
+    }
+
+    async function loadQuizQuestions(count, difficulty) {
+      const endpoint = ctx.source === "exam-practice" ? "/exam-practice/quiz/generate" : "/quiz/generate";
+      const data = await apiFetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify({
+          moduleId: ctx.moduleId,
+          chapterId: ctx.chapterId,
+          chapterIds: ctx.chapterIds,
+          chapterTitle: ctx.chapterTitle,
+          questionCount: count,
+          difficulty,
+          questionTypes: ["truefalse", "missing_word", "term_definition"]
+        })
+      });
+      return (data.questions || []).map(adaptQuestion).filter(isInvaderQuestion);
+    }
+
+    function appendUniqueQuestions(questions) {
+      const seen = new Set(state.questions.map(q => q.id || normalizeText(q.text)));
+      const fresh = questions.filter(q => {
+        const key = q.id || normalizeText(q.text);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      state.questions.push(...fresh);
+      return fresh.length;
+    }
+
+    function loadRemainingQuizQuestions(totalCount, firstCount, difficulty) {
+      const remaining = Math.max(0, totalCount - firstCount);
+      if (!remaining) return;
+
+      state.loadingMoreQuestions = true;
+      loadQuizQuestions(remaining, difficulty)
+        .then(questions => {
+          appendUniqueQuestions(questions);
+          state.loadingMoreQuestions = false;
+          if (state.active && state.current >= state.questions.length && state.lives > 0) {
+            renderQuestion();
+          }
+        })
+        .catch(error => {
+          console.warn("Could not load remaining Invader questions:", error.message);
+          state.loadingMoreQuestions = false;
+        });
+    }
+
+    async function loadBossQuestions() {
+      try {
+        const data = await apiFetch("/student/api/exam/predict-questions", {
+          method: "POST",
+          body: JSON.stringify({
+            moduleId: ctx.moduleId,
+            chapterIds: [ctx.chapterId],
+            intensity: "intense",
+            studyMode: "exam",
+            examTypes: ["previous_exam", "mock_exam", "practice_test"]
+          })
+        });
+        const predictions = (data.predictions || []).slice(0, 20);
+        const playable = predictions.map(adaptQuestion).filter(isInvaderQuestion);
+        if (playable.length) return playable;
+      } catch (error) {
+        console.warn("Boss predictor unavailable, falling back to hard quiz questions:", error.message);
+      }
+      return loadQuizQuestions(20, "hard");
+    }
+
+    function skillText(skill) {
+      return normalizeText([skill?.title, skill?.description, skill?.evidence].filter(Boolean).join(" "));
+    }
+
+    function matchingSkillForQuestion(question) {
+      const questionText = normalizeText([
+        question?.text,
+        question?.correctText,
+        ...(question?.options || [])
+      ].join(" "));
+
+      const scored = state.moduleSkills
+        .map(skill => {
+          const words = skillText(skill).split(" ").filter(word => word.length > 3);
+          const matches = words.filter(word => questionText.includes(word)).length;
+          return { skill, matches };
+        })
+        .filter(row => row.matches > 0)
+        .sort((a, b) => b.matches - a.matches);
+
+      return scored[0]?.skill || null;
+    }
+
+    async function loadModuleSkills() {
+      if (!ctx.moduleId) return;
+      try {
+        const data = await apiFetch(`/student/module-skills?moduleId=${encodeURIComponent(ctx.moduleId)}`);
+        const result = (data.results || [])[0] || {};
+        state.moduleSkills = Array.isArray(result.skills) ? result.skills : [];
+        renderModuleSkills();
+      } catch (error) {
+        state.moduleSkills = [];
+        if (el("moduleSkills")) el("moduleSkills").innerHTML = `<div class="muted">Module guide skills unavailable.</div>`;
+      }
+    }
+
+    function renderModuleSkills() {
+      const target = el("moduleSkills");
+      if (!target) return;
+      target.innerHTML = state.moduleSkills.length ? state.moduleSkills.slice(0, 8).map(skill => (
+        `<div class="row"><span>Skill</span><span>${escapeHtml(skill.title)}</span><span class="pill">${escapeHtml(skill.confidence || "guide")}</span></div>`
+      )).join("") : `<div class="muted">No module-guide skills found yet.</div>`;
+    }
+
+    function setSetupStatus(text) {
+      el("setupStatus").textContent = text;
+    }
+
+    function updateHud() {
+      const accuracy = state.attempts ? Math.round((state.correct / state.attempts) * 100) : 100;
+      el("score").textContent = state.score;
+      el("xp").textContent = state.xp;
+      el("accuracy").textContent = `${accuracy}%`;
+      el("lives").textContent = "❤".repeat(Math.max(0, state.lives)) || "0";
+      el("liveLives").textContent = state.lives;
+      el("level").textContent = state.level;
+      el("modeLabel").textContent = state.gameMode === "boss" ? "Boss" : "Standard";
+    }
+
+    function clearEnemies() {
+      state.enemies.forEach(enemy => enemy.node.remove());
+      state.enemies = [];
+      clearTimeout(state.missTimer);
+    }
+
+    function setEnemiesPaused(paused) {
+      state.enemies.forEach(enemy => {
+        enemy.node.style.animationPlayState = paused ? "paused" : "running";
+      });
+    }
+
+    function scheduleMiss(duration) {
+      clearTimeout(state.missTimer);
+      state.missDuration = duration;
+      state.questionStartedAt = Date.now();
+      state.missTimer = setTimeout(() => {
+        if (!state.active || state.paused) return;
+        state.lives -= 1;
+        state.correctStreak = 0;
+        state.attempts += 1;
+        updateHud();
+        if (state.lives <= 0) finishGame();
+        else {
+          state.current += 1;
+          renderQuestion();
+        }
+      }, duration);
+    }
+
+    function panelHtml() {
+      return "";
+    }
+
+    function showStatsOverlay({ title, subtitle = "", paused = false, resultHtml = "" }) {
+      const old = document.querySelector(".overlay");
+      if (old) old.remove();
+
+      const overlay = document.createElement("div");
+      overlay.className = "overlay";
+      overlay.id = paused ? "pauseOverlay" : "resultOverlay";
+      overlay.innerHTML = `
+        <div class="overlay-head">
+          <div>
+            <div class="overlay-title">${escapeHtml(title)}</div>
+            ${subtitle ? `<div class="muted">${escapeHtml(subtitle)}</div>` : ""}
+            ${paused ? `<div class="pause-countdown" id="pauseCountdown">Pause resumes in 30s</div>` : ""}
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${paused ? `<button class="btn primary" type="button" id="resumeBtn">Resume</button>` : ""}
+            <button class="btn" type="button" onclick="openLeaderboard()">Leaderboard</button>
+            <button class="btn" type="button" onclick="goBackToLearning()">Back</button>
+          </div>
+        </div>
+        ${resultHtml}
+        ${panelHtml()}
+      `;
+      el("arena").appendChild(overlay);
+      overlay.querySelectorAll("[data-metric]").forEach(button => {
+        button.addEventListener("click", () => loadLeaderboard(button.dataset.metric));
+      });
+      overlay.querySelector("#resumeBtn")?.addEventListener("click", resumeGame);
+    }
+
+    function pauseGame() {
+      if (!state.active || state.paused) return;
+      state.paused = true;
+      state.pauseStartedAt = Date.now();
+      state.missRemaining = Math.max(1, state.missDuration - (Date.now() - state.questionStartedAt));
+      clearTimeout(state.missTimer);
+      setEnemiesPaused(true);
+      el("pauseBtn").textContent = "Resume";
+      showStatsOverlay({
+        title: "Paused",
+        subtitle: "Open the leaderboard page to review rankings, badges, and module-guide skills.",
+        paused: true
+      });
+
+      clearInterval(state.pauseCountdownTimer);
+      state.pauseCountdownTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - state.pauseStartedAt) / 1000);
+        const left = Math.max(0, 30 - elapsed);
+        const countdown = document.getElementById("pauseCountdown");
+        if (countdown) countdown.textContent = `Pause resumes in ${left}s`;
+        if (left <= 0) resumeGame();
+      }, 250);
+    }
+
+    function resumeGame() {
+      if (!state.active || !state.paused) return;
+      const pausedFor = Date.now() - state.pauseStartedAt;
+      state.pausedMs += Math.min(pausedFor, 30000);
+      state.paused = false;
+      state.pauseStartedAt = null;
+      clearInterval(state.pauseCountdownTimer);
+      document.querySelector(".overlay")?.remove();
+      setEnemiesPaused(false);
+      el("pauseBtn").textContent = "Pause";
+      scheduleMiss(state.missRemaining || state.missDuration);
+      if (!isMobileGameControl()) el("answerInput").focus();
+    }
+
+    function togglePauseFromMobile() {
+      if (!isMobileGameControl() || !state.active) return;
+      if (state.paused) resumeGame();
+      else pauseGame();
+    }
+
+    function handleArenaMobileTap(event) {
+      if (!isMobileGameControl() || !state.active) return;
+      if (event.target.closest(".enemy") || event.target.closest(".overlay") || event.target.closest(".ship")) return;
+
+      const now = Date.now();
+      if (now - state.lastArenaTapAt <= 360) {
+        state.lastArenaTapAt = 0;
+        togglePauseFromMobile();
+      } else {
+        state.lastArenaTapAt = now;
+      }
+    }
+
+    function renderQuestion() {
+      clearEnemies();
+      if (state.lives <= 0) return finishGame();
+      if (state.current >= state.questions.length) {
+        if (state.loadingMoreQuestions) {
+          el("questionMeta").textContent = "Loading next wave";
+          el("questionText").textContent = "More questions are being prepared. Hold position.";
+          setTimeout(() => {
+            if (state.active && state.current >= state.questions.length) renderQuestion();
+          }, 700);
+          return;
+        }
+        return finishGame();
+      }
+      const q = state.questions[state.current];
+      el("questionMeta").textContent = `Question ${state.current + 1} of ${state.questions.length} · ${q.type.replace("_", " ")} · ${q.difficulty}`;
+      el("questionText").textContent = q.text;
+      spawnEnemies(q);
+      el("answerInput").value = "";
+      if (!isMobileGameControl()) el("answerInput").focus();
+    }
+
+    function spawnEnemies(question) {
+      const arena = el("arena");
+      const isMobile = arena.clientWidth <= 620;
+      const gap = isMobile ? 14 : 18;
+      const cardHeight = isMobile ? 64 : 70;
+      const rowStep = cardHeight + (isMobile ? 22 : gap);
+      const cardWidth = Math.min(isMobile ? 168 : 220, Math.max(132, Math.floor((arena.clientWidth - 32) / 2)));
+      const columns = Math.max(1, Math.min(question.options.length, Math.floor((arena.clientWidth - 32 + gap) / (cardWidth + gap))));
+      const totalWidth = columns * cardWidth + (columns - 1) * gap;
+      const startX = Math.max(10, Math.floor((arena.clientWidth - totalWidth) / 2));
+      const questionBottom = isMobile
+        ? Math.max(18, el("questionText").closest(".top-question").getBoundingClientRect().bottom - arena.getBoundingClientRect().top + 16)
+        : 18;
+      const maxRow = Math.floor((question.options.length - 1) / columns);
+      question.options.forEach((option, index) => {
+        const node = document.createElement("div");
+        node.className = "enemy";
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const spawnDelay = isMobile
+          ? (maxRow - row) * 0.28 + col * 0.08
+          : index * 0.42;
+        node.style.width = `${cardWidth}px`;
+        node.style.height = `${cardHeight}px`;
+        node.style.left = `${startX + col * (cardWidth + gap)}px`;
+        node.style.top = `${questionBottom + row * rowStep}px`;
+        node.style.animationDuration = `${Math.max(isMobile ? 13 : 11, 20 - state.level * .35)}s`;
+        node.style.animationDelay = `${spawnDelay}s`;
+        if (spawnDelay > 0) {
+          node.classList.add("waiting");
+          setTimeout(() => node.classList.remove("waiting"), spawnDelay * 1000);
+        }
+        const key = question.type === "truefalse" ? option.toUpperCase() : letters[index];
+        node.innerHTML = `<div class="enemy-key">${escapeHtml(key)}</div><div class="enemy-text">${escapeHtml(option)}</div>`;
+        node.addEventListener("click", event => {
+          event.stopPropagation();
+          submitEnemyChoice(index);
+        });
+        node.addEventListener("touchend", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          submitEnemyChoice(index);
+        }, { passive: false });
+        arena.appendChild(node);
+        state.enemies.push({ node, option, index, key });
+      });
+
+      scheduleMiss(Math.max(10000, 17000 - state.level * 450));
+    }
+
+    function matchesAnswer(input, question) {
+      const answer = normalizeText(input);
+      if (!answer) return false;
+      const correctLetter = normalizeText(letters[question.correctIndex]);
+      const correctText = normalizeText(question.correctText);
+      if (question.type === "truefalse") return answer === correctText || answer === correctText.slice(0, 1);
+      return answer === correctLetter || answer === correctText;
+    }
+
+    function enemyForInput(input) {
+      const answer = normalizeText(input);
+      if (!answer) return null;
+      return state.enemies.find(enemy => {
+        const key = normalizeText(enemy.key);
+        const option = normalizeText(enemy.option);
+        return answer === key || answer === option || answer === option.slice(0, 1);
+      }) || null;
+    }
+
+    function handleAnswer(value, explicitEnemy = null) {
+      if (!state.active || state.paused) return;
+      const q = state.questions[state.current];
+      state.attempts += 1;
+
+      if (matchesAnswer(value, q)) {
+        const target = explicitEnemy || state.enemies.find(enemy => enemy.index === q.correctIndex);
+        fireLaser(target);
+        state.correct += 1;
+        state.correctStreak += 1;
+        if (state.correctStreak > 0 && state.correctStreak % 3 === 0) {
+          state.lives += 1;
+        }
+        const base = state.gameMode === "boss" ? 35 : 20;
+        state.score += base + state.level * 5;
+        const gainedXp = state.gameMode === "boss" ? 25 : 10;
+        state.xp += gainedXp;
+        const matchedSkill = matchingSkillForQuestion(q);
+        const skillName = matchedSkill?.title || ctx.moduleName || "Problem Solving";
+        state.skillHits[skillName] = (state.skillHits[skillName] || 0) + gainedXp;
+        state.level = Math.max(state.level, Math.floor(state.correct / 2) + 1);
+        updateHud();
+        setTimeout(() => {
+          state.current += 1;
+          renderQuestion();
+        }, 360);
+      } else {
+        fireLaser(explicitEnemy || enemyForInput(value));
+        state.lives -= 1;
+        state.correctStreak = 0;
+        el("answerInput").value = "";
+        state.enemies.forEach(enemy => enemy.node.classList.add("danger"));
+        setTimeout(() => state.enemies.forEach(enemy => enemy.node.classList.remove("danger")), 280);
+        updateHud();
+        if (state.lives <= 0) finishGame();
+      }
+    }
+
+    function submitEnemyChoice(index) {
+      const enemy = state.enemies.find(item => item.index === index);
+      if (!enemy) return;
+      handleAnswer(enemy.index === state.questions[state.current].correctIndex ? enemy.key : enemy.option, enemy);
+    }
+
+    function fireLaser(targetEnemy) {
+      const arena = el("arena");
+      const ship = el("ship").getBoundingClientRect();
+      const arenaBox = arena.getBoundingClientRect();
+      const startX = ship.left - arenaBox.left + ship.width / 2;
+      const startY = ship.top - arenaBox.top + 10;
+      let endX = startX;
+      let endY = Math.max(24, startY - Math.min(360, arenaBox.height * .7));
+
+      if (targetEnemy) {
+        const targetBox = targetEnemy.node.getBoundingClientRect();
+        endX = targetBox.left - arenaBox.left + targetBox.width / 2;
+        endY = targetBox.top - arenaBox.top + targetBox.height / 2;
+      }
+
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const distance = Math.max(80, Math.sqrt(dx * dx + dy * dy));
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const laser = document.createElement("div");
+      laser.className = "laser";
+      laser.style.left = `${startX}px`;
+      laser.style.top = `${startY}px`;
+      laser.style.setProperty("--laser-distance", `${distance}px`);
+      laser.style.transform = `rotate(${angle}deg)`;
+      arena.appendChild(laser);
+      setTimeout(() => laser.remove(), 300);
+
+      if (targetEnemy) {
+        const box = targetEnemy.node.getBoundingClientRect();
+        const boom = document.createElement("div");
+        boom.className = "explosion";
+        boom.style.left = `${box.left - arenaBox.left + box.width / 2 - 36}px`;
+        boom.style.top = `${box.top - arenaBox.top + box.height / 2 - 36}px`;
+        arena.appendChild(boom);
+        targetEnemy.node.classList.add("hit");
+        setTimeout(() => boom.remove(), 360);
+      }
+    }
+
+    function submitAnswer() {
+      const value = el("answerInput").value;
+      handleAnswer(value);
+    }
+
+    function skillRewards() {
+      const xp = state.xp;
+      const directSkillRewards = Object.entries(state.skillHits).map(([skill, value]) => ({
+        skill,
+        xp: value
+      }));
+
+      if (directSkillRewards.length) {
+        const assigned = directSkillRewards.reduce((sum, row) => sum + row.xp, 0);
+        const supportXp = Math.max(0, xp - assigned);
+        return [
+          ...directSkillRewards,
+          { skill: "Problem Solving", xp: Math.round(supportXp * .65) },
+          { skill: state.gameMode === "boss" ? "Exam Preparation" : "Fast Recall", xp: Math.round(supportXp * .35) }
+        ].filter(row => row.xp > 0);
+      }
+
+      return [
+        { skill: ctx.moduleName || "Module", xp: Math.round(xp * .45) },
+        { skill: "Problem Solving", xp: Math.round(xp * .35) },
+        { skill: state.gameMode === "boss" ? "Exam Preparation" : "Fast Recall", xp: Math.round(xp * .20) }
+      ].filter(row => row.xp > 0);
+    }
+
+    async function saveScore(summary) {
+      try {
+        const data = await apiFetch("/game/scores", {
+          method: "POST",
+          body: JSON.stringify({
+            chapterId: ctx.chapterId,
+            score: summary.score,
+            accuracy: summary.accuracy,
+            timeTaken: summary.timeTaken,
+            xpEarned: summary.xp,
+            levelReached: summary.level,
+            gameMode: state.gameMode,
+            skillRewards: skillRewards()
+          })
+        });
+        return data.badges || [];
+      } catch (error) {
+        console.error("Could not save game score:", error);
+        return [];
+      }
+    }
+
+    async function finishGame() {
+      if (!state.active) return;
+      state.active = false;
+      state.paused = false;
+      clearInterval(state.pauseCountdownTimer);
+      el("pauseBtn").classList.add("hidden");
+      el("profileBtn").classList.remove("hidden");
+      document.body.classList.remove("game-active");
+      clearEnemies();
+      const timeTaken = state.startTime ? Math.round((Date.now() - state.startTime - state.pausedMs) / 1000) : 0;
+      const accuracy = state.attempts ? Math.round((state.correct / state.attempts) * 100) : 0;
+      const summary = { score: state.score, xp: state.xp, accuracy, timeTaken, level: state.level };
+      const badges = await saveScore(summary);
+
+      const resultHtml = `
+          <div class="result-grid">
+            <div class="stat"><div class="stat-label">Score</div><div class="stat-value">${summary.score}</div></div>
+            <div class="stat"><div class="stat-label">XP Earned</div><div class="stat-value">${summary.xp}</div></div>
+            <div class="stat"><div class="stat-label">Accuracy</div><div class="stat-value">${summary.accuracy}%</div></div>
+            <div class="stat"><div class="stat-label">Time</div><div class="stat-value">${Math.floor(summary.timeTaken / 60)}m ${summary.timeTaken % 60}s</div></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0">
+            ${badges.length ? badges.map(b => `<span class="pill">${escapeHtml(b.name)}</span>`).join("") : `<span class="muted">No new badges this round.</span>`}
+          </div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn primary" type="button" onclick="location.reload()">Play Again</button>
+            <button class="btn" type="button" onclick="openLeaderboard()">Leaderboard</button>
+          </div>
+      `;
+      showStatsOverlay({
+        title: state.lives > 0 ? "Victory" : "Mission Ended",
+        subtitle: `${ctx.chapterTitle} - ${state.gameMode === "boss" ? "Boss Battle" : "Invader Challenge"}`,
+        resultHtml
+      });
+    }
+
+    async function startGame(mode) {
+      if (!ctx.chapterId) {
+        setSetupStatus("No chapter selected. Go back to Learning and select a chapter first.");
+        return;
+      }
+
+      state.gameMode = mode;
+      state.active = false;
+      setSetupStatus(mode === "boss" ? "Loading predicted boss questions..." : "Loading quiz questions...");
+
+      try {
+        const count = parseInt(el("questionCount").value, 10);
+        const difficulty = el("difficulty").value;
+        if (mode === "boss") {
+          state.questions = await loadBossQuestions();
+        } else {
+          const firstCount = Math.min(2, count);
+          state.questions = await loadQuizQuestions(firstCount, difficulty);
+          if (!state.questions.length && count > firstCount) {
+            state.questions = await loadQuizQuestions(count, difficulty);
+          }
+        }
+        if (!state.questions.length) throw new Error("No playable questions were returned.");
+
+        state.current = 0;
+        state.score = 0;
+        state.xp = 0;
+        state.lives = mode === "boss" ? 5 : 3;
+        state.correct = 0;
+        state.correctStreak = 0;
+        state.attempts = 0;
+        state.level = mode === "boss" ? 3 : 1;
+        state.startTime = Date.now();
+        state.pausedMs = 0;
+        state.pauseStartedAt = null;
+        state.missRemaining = 0;
+        state.skillHits = {};
+        state.loadingMoreQuestions = false;
+        state.active = true;
+        state.paused = false;
+        el("setup").classList.add("hidden");
+        el("gameWrap").classList.remove("hidden");
+        el("pauseBtn").classList.remove("hidden");
+        el("profileBtn").classList.add("hidden");
+        document.body.classList.add("game-active");
+        updateHud();
+        renderQuestion();
+        if (mode !== "boss" && state.questions.length < count) {
+          loadRemainingQuizQuestions(count, state.questions.length, difficulty);
+        }
+      } catch (error) {
+        setSetupStatus(`Could not start game: ${error.message}`);
+      }
+    }
+
+    function formatTime(seconds) {
+      return `${Math.floor((seconds || 0) / 60)}m ${(seconds || 0) % 60}s`;
+    }
+
+    async function loadLeaderboard(metric = "score") {
+      if (!el("leaderboard")) return;
+      if (!ctx.chapterId) return;
+      try {
+        const data = await apiFetch(`/game/leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&metric=${encodeURIComponent(metric)}&limit=8`);
+        const rows = data.leaderboard || [];
+        el("leaderboard").innerHTML = rows.length ? rows.map(row => {
+          const value = metric === "fastest" ? formatTime(row.time_taken) : metric === "accuracy" ? `${Math.round(row.accuracy)}%` : metric === "xp" ? row.xp_earned : row.score;
+          return `<div class="row"><strong>#${row.rank}</strong><span>${escapeHtml(row.student_name)}</span><span class="pill">${value}</span></div>`;
+        }).join("") : `<div class="muted">No scores yet.</div>`;
+      } catch (error) {
+        el("leaderboard").innerHTML = `<div class="muted">Leaderboard unavailable.</div>`;
+      }
+    }
+
+    async function loadProfile() {
+      if (!el("skillXp") || !el("badges")) return;
+      try {
+        const data = await apiFetch("/game/profile");
+        const skills = data.skills || [];
+        const badges = data.badges || [];
+        el("skillXp").innerHTML = skills.length ? skills.slice(0, 6).map(row => (
+          `<div class="row"><span>XP</span><span>${escapeHtml(row.skill_name)}</span><span class="pill">${row.xp}</span></div>`
+        )).join("") : `<div class="muted">Play a round to earn XP.</div>`;
+        el("badges").innerHTML = badges.length ? badges.slice(0, 8).map(row => (
+          `<div class="row"><span>🏅</span><span>${escapeHtml(row.badge_name)}</span><span class="muted">${new Date(row.earned_at).toLocaleDateString()}</span></div>`
+        )).join("") : `<div class="muted">No badges yet.</div>`;
+      } catch (error) {
+        el("skillXp").innerHTML = `<div class="muted">Stats unavailable.</div>`;
+        el("badges").innerHTML = `<div class="muted">Badges unavailable.</div>`;
+      }
+    }
+
+    el("startBtn").addEventListener("click", () => startGame("standard"));
+    el("bossBtn").addEventListener("click", () => startGame("boss"));
+    el("pauseBtn").addEventListener("click", () => {
+      if (state.paused) resumeGame();
+      else pauseGame();
+    });
+    el("fireBtn").addEventListener("click", submitAnswer);
+    el("answerInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") submitAnswer();
+    });
+    el("arena").addEventListener("click", handleArenaMobileTap);
+    el("ship").addEventListener("click", event => {
+      event.stopPropagation();
+      togglePauseFromMobile();
+    });
+    el("ship").addEventListener("touchend", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      togglePauseFromMobile();
+    }, { passive: false });
+    el("profileBtn").textContent = "Leaderboard";
+    el("profileBtn").addEventListener("click", openLeaderboard);
+    document.querySelectorAll("[data-metric]").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-metric]").forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        loadLeaderboard(button.dataset.metric);
+      });
+    });
+
+    (async function init() {
+      el("contextLine").textContent = contextLabel();
+      if (!(await requireAuth())) return;
+      if (!ctx.chapterId) setSetupStatus("No chapter selected. Go back to Learning and select a chapter first.");
+      loadModuleSkills();
+    })();
+  </script>
+</body>
+</html>
