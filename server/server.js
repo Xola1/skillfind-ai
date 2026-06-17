@@ -24,7 +24,7 @@ import gameRouter from "./routes/game-server.js";
 import wordBuilderRouter from "./routes/word-builder-server.js";
 import examPracticeRouter from "./routes/exam-practice-server.js";
 import activityRouter from "./routes/activity-server.js";
-import adminDeleteRouter from "../frontend/admin/routes/admin-delete.js";  // <-- ADD THIS
+import adminDeleteRouter from "./routes/admin-delete.js";  // <-- ADD THIS
 
 const app = express();
 app.use(cors());
