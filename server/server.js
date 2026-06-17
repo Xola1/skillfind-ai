@@ -27,7 +27,26 @@ import activityRouter from "./routes/activity-server.js";
 import adminDeleteRouter from "./routes/admin-delete.js";  // <-- ADD THIS
 
 const app = express();
-app.use(cors());
+const allowedCorsOrigins = new Set([
+  "https://skillfinderai.netlify.app",
+  "http://localhost:5050",
+  "http://127.0.0.1:5050"
+]);
+
+for (const origin of String(process.env.CORS_ORIGINS || "").split(",")) {
+  const trimmed = origin.trim();
+  if (trimmed) allowedCorsOrigins.add(trimmed);
+}
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedCorsOrigins.has(origin) || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  }
+}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(process.cwd(), "frontend")));
 

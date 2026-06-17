@@ -1088,7 +1088,7 @@
       // Use a unique variable name to avoid conflicts
       const ExamStudyApp = {
         supabase: null,
-        API_BASE: "http://localhost:5050",
+        API_BASE: window.APP_CONFIG.API_BASE,
         studyMode: studyModeConfig,
         studyState: {
           modules: [],

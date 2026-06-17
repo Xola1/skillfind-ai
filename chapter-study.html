@@ -13,7 +13,7 @@
   <main class="page"><div class="tool-header"><div><h1 class="tool-title">Chapter Study Guide</h1><div class="tool-sub">Generate a focused study guide for your selected chapter.</div></div><button class="start-btn" id="generateBtn">Generate Again</button></div><section class="panel" id="toolBody"></section></main>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script><script src="frontend/config.js"></script>
   <script>
-    const API_BASE = "http://localhost:5050";
+    const API_BASE = window.APP_CONFIG.API_BASE;
     const STORAGE_CONTEXT_KEY = "skillfind:selectedContext";
     const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

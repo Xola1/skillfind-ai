@@ -1,6 +1,6 @@
 (function () {
-  const API_BASE = "http://localhost:5050";
   const cfg = window.APP_CONFIG || {};
+  const API_BASE = cfg.API_BASE;
 
   if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) {
     alert("Missing APP_CONFIG in config.js (SUPABASE_URL / SUPABASE_ANON_KEY).");

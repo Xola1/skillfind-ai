@@ -1263,7 +1263,7 @@
     const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
     const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const API_BASE = "http://localhost:5050";
+    const API_BASE = window.APP_CONFIG.API_BASE;
     const API_MODULES = `${API_BASE}/student/modules`;
     const API_CHAPTERS = `${API_BASE}/student/chapters`;
     const API_ASK = `${API_BASE}/student/chat/ask`;

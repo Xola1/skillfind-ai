@@ -1,8 +1,8 @@
 // ---------- CONFIG ----------
-const API_BASE = "http://localhost:5050/admin";
-
 // Expect config injected in frontend (config.js)
 const CFG = window.APP_CONFIG || {};
+const API_ROOT = CFG.API_BASE;
+const API_BASE = `${API_ROOT}/admin`;
 const SUPABASE_URL = CFG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY;
 
@@ -395,7 +395,7 @@ function renderExams(exams) {
       if (!confirm(`Process exam "${btn.dataset.title}"? This will extract questions, answers, and reusable mock-prediction data into the database.`)) return;
       setText(ui.examsStatus, "Processing exam and storing reusable questions...");
       const token = await getAccessToken();
-      const response = await fetch(`http://localhost:5050/api/questions/exams/${btn.dataset.id}/process`, {
+      const response = await fetch(`${API_ROOT}/api/questions/exams/${btn.dataset.id}/process`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
       });
@@ -546,7 +546,7 @@ async function loadLeaderboardAnalytics() {
   try {
     renderAnalyticsRows(ui.leaderboardRows, [], null, "Loading analytics...");
     const token = await getAccessToken();
-    const res = await fetch("http://localhost:5050/activity/admin/analytics", {
+    const res = await fetch(`${API_ROOT}/activity/admin/analytics`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     const data = await res.json();

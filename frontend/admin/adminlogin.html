@@ -336,7 +336,7 @@
       }
 
       async function checkPrototypeServer() {
-        const apiBase = cfg.API_BASE || "http://localhost:5050";
+        const apiBase = cfg.API_BASE;
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 3500);
 

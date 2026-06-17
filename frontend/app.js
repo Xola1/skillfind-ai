@@ -1,6 +1,7 @@
-const API_UPLOAD = "http://localhost:5050/chapter/upload";
-const API_LIST = "http://localhost:5050/chapters";
-const API_ASK = "http://localhost:5050/ask";
+const API_BASE = window.APP_CONFIG.API_BASE;
+const API_UPLOAD = `${API_BASE}/chapter/upload`;
+const API_LIST = `${API_BASE}/chapters`;
+const API_ASK = `${API_BASE}/ask`;
 
 const els = {
   subject: document.getElementById("subject"),

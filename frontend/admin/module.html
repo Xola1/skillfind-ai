@@ -381,8 +381,8 @@
       document.body.classList.add("embedded");
     }
 
-    const API_BASE = "http://localhost:5050/admin";
     const CFG = window.APP_CONFIG || {};
+    const API_BASE = `${CFG.API_BASE}/admin`;
     const SUPABASE_URL = CFG.SUPABASE_URL;
     const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY;
 
