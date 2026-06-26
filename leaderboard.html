@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SkillFind AI - Invader Leaderboard</title>
+  <title>SkillFind AI - Practice Leaderboard</title>
   <style>
     :root {
       --bg: #06101f;
@@ -30,6 +30,7 @@
     }
 
     button { font: inherit; cursor: pointer; }
+    .hidden { display: none !important; }
 
     .topbar {
       position: sticky;
@@ -95,7 +96,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 1fr;
       gap: 8px;
     }
 
@@ -147,6 +148,101 @@
       font-size: 13px;
     }
 
+    button.row {
+      width: 100%;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    button.row:hover,
+    button.row.selected {
+      border-color: rgba(166,255,218,.42);
+      background: rgba(166,255,218,.10);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .summary-stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.045);
+      padding: 10px;
+    }
+
+    .summary-stat strong {
+      display: block;
+      font-size: 18px;
+      color: var(--brand2);
+    }
+
+    .contribution-row {
+      display: grid;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.045);
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .contribution-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      font-weight: 900;
+    }
+
+    .bar {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(3, 7, 17, .68);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      max-height: min(720px, calc(100vh - 36px));
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(9, 20, 38, .96);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -160,6 +256,12 @@
       white-space: nowrap;
     }
 
+    .gold-stars {
+      color: #ffd166;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
     .stack { display: grid; gap: 16px; }
     .error { color: #ffd3d3; border-color: rgba(255,122,122,.42); background: rgba(255,122,122,.10); }
 
@@ -169,6 +271,7 @@
       .topbar .btn:not(.icon-btn) { flex: 1 1 46%; }
       .grid { grid-template-columns: 1fr; }
       .tabs { grid-template-columns: repeat(2, 1fr); }
+      .summary-grid { grid-template-columns: 1fr; }
       .page { width: min(100% - 20px, 1180px); }
     }
   </style>
@@ -177,7 +280,7 @@
   <header class="topbar">
     <button class="btn icon-btn" type="button" id="backBtn" aria-label="Go back" title="Go back">&lsaquo;</button>
     <div class="context">
-      <div class="context-title">Invader Leaderboard</div>
+      <div class="context-title">Practice Leaderboard</div>
       <div class="context-sub" id="contextLine">Loading chapter...</div>
     </div>
     <button class="btn primary" type="button" id="playBtn">Play</button>
@@ -187,45 +290,50 @@
   <main class="page">
     <section class="hero">
       <h1>Chapter Rankings</h1>
-      <p class="muted" id="heroText">Scores, XP, accuracy, skills, and badges for this Invader Challenge chapter.</p>
+      <p class="muted" id="heroText">Shared practice rankings for this chapter, including Quiz, Flash Cards, Crossword, Word Invader, and Word Builder.</p>
     </section>
 
     <section class="panel">
       <div class="tabs">
-        <button type="button" class="active" data-metric="score">Top Scores</button>
-        <button type="button" data-metric="xp">Top XP</button>
-        <button type="button" data-metric="accuracy">Accuracy</button>
-        <button type="button" data-metric="fastest">Fastest</button>
+        <button type="button" class="active" data-metric="practice">Practice</button>
       </div>
     </section>
 
     <section class="grid">
       <section class="panel">
         <div>
-          <div class="panel-title">Leaderboard</div>
-          <div class="muted" style="font-size:12px">Ranked for the selected chapter.</div>
+          <div class="panel-title">Practice Leaderboard</div>
+          <div class="muted" style="font-size:12px">Ranked by normalized practice score for the selected chapter.</div>
         </div>
         <div class="list" id="leaderboard"><div class="muted">Loading leaderboard...</div></div>
       </section>
 
       <div class="stack">
         <section class="panel">
-          <div class="panel-title">Skill XP</div>
+          <div class="panel-title">Chapter Skills</div>
           <div class="list" id="skillXp"><div class="muted">Loading skill XP...</div></div>
         </section>
 
         <section class="panel">
-          <div class="panel-title">Module Guide Skills</div>
-          <div class="list" id="moduleSkills"><div class="muted">Loading module skills...</div></div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-title">Badges</div>
+          <div class="panel-title">Chapter Badges</div>
           <div class="list" id="badges"><div class="muted">Loading badges...</div></div>
         </section>
       </div>
     </section>
   </main>
+
+  <div class="modal-backdrop hidden" id="studentModal" role="dialog" aria-modal="true" aria-labelledby="studentModalTitle">
+    <section class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="panel-title" id="studentModalTitle">Student Games</div>
+          <div class="muted" style="font-size:12px">Practice score contribution by game.</div>
+        </div>
+        <button class="btn icon-btn" type="button" id="closeStudentModal" aria-label="Close" title="Close">x</button>
+      </div>
+      <div id="studentDetails" class="list"><div class="muted">Loading student games...</div></div>
+    </section>
+  </div>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="frontend/config.js"></script>
@@ -249,8 +357,8 @@
     }
 
     const ctx = getSavedContext();
-    let currentMetric = "score";
-    let moduleSkills = [];
+    let currentMetric = "practice";
+    let selectedStudentId = "";
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -305,8 +413,59 @@
       window.location.href = gameUrl();
     }
 
-    function formatTime(seconds) {
-      return `${Math.floor((seconds || 0) / 60)}m ${(seconds || 0) % 60}s`;
+    function goldStars(count) {
+      const safe = Math.max(0, Math.min(Number(count) || 0, 5));
+      return "★".repeat(safe);
+    }
+
+    function renderStudentDetails(data) {
+      const totalScore = Number(data.total_score) || 0;
+      const contributions = data.contributions || [];
+      el("studentDetails").innerHTML = `
+        <div>
+          <div class="panel-title">${escapeHtml(data.student_name || "Student")}</div>
+          <div class="muted" style="font-size:12px">Practice score contribution by game.</div>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-stat"><span class="muted">Total Score</span><strong>${totalScore}</strong></div>
+          <div class="summary-stat"><span class="muted">Games Played</span><strong>${data.attempts || 0}</strong></div>
+          <div class="summary-stat"><span class="muted">Avg Accuracy</span><strong>${data.average_accuracy || 0}%</strong></div>
+        </div>
+        ${contributions.length ? contributions.map(game => `
+          <div class="contribution-row">
+            <div class="contribution-head">
+              <span>${escapeHtml(game.activity_label)}</span>
+              <span class="pill">${game.contribution_score} pts</span>
+            </div>
+            <div class="bar"><span style="width:${Math.max(2, game.contribution_percent || 0)}%"></span></div>
+            <div class="muted">${game.contribution_percent || 0}% of total - ${game.attempts} played - best accuracy ${game.best_accuracy || 0}%</div>
+          </div>
+        `).join("") : `<div class="muted">No practice games recorded for this student yet.</div>`}
+      `;
+    }
+
+    function openStudentModal() {
+      el("studentModal").classList.remove("hidden");
+    }
+
+    function closeStudentModal() {
+      el("studentModal").classList.add("hidden");
+    }
+
+    async function loadStudentDetails(studentId) {
+      if (!studentId || !ctx.chapterId) return;
+      selectedStudentId = studentId;
+      document.querySelectorAll("[data-student-id]").forEach(row => {
+        row.classList.toggle("selected", row.dataset.studentId === studentId);
+      });
+      openStudentModal();
+      el("studentDetails").innerHTML = `<div class="muted">Loading student games...</div>`;
+      try {
+        const data = await apiFetch(`/activity/practice-leaderboard/student/${encodeURIComponent(studentId)}?chapterId=${encodeURIComponent(ctx.chapterId)}`);
+        renderStudentDetails(data);
+      } catch (error) {
+        el("studentDetails").innerHTML = `<div class="row error"><span>!</span><span>Student games unavailable.</span><span></span></div>`;
+      }
     }
 
     async function loadLeaderboard(metric = currentMetric) {
@@ -317,18 +476,23 @@
       }
 
       try {
-        const data = await apiFetch(`/game/leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&metric=${encodeURIComponent(metric)}&limit=20`);
+        const data = await apiFetch(`/activity/practice-leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&limit=20`);
         const rows = data.leaderboard || [];
         el("leaderboard").innerHTML = rows.length ? rows.map(row => {
-          const value = metric === "fastest"
-            ? formatTime(row.time_taken)
-            : metric === "accuracy"
-              ? `${Math.round(row.accuracy)}%`
-              : metric === "xp"
-                ? row.xp_earned
-                : row.score;
-          return `<div class="row"><strong>#${row.rank}</strong><span>${escapeHtml(row.student_name)}</span><span class="pill">${value}</span></div>`;
+          const value = `${row.total_score || row.normalized_score} pts`;
+          const detail = row.top_badge_name
+            ? `<br><span class="muted">${escapeHtml(row.top_badge_name)} <span class="gold-stars">${goldStars(row.top_badge_stars)}</span> - ${row.average_accuracy || 0}% avg</span>`
+            : "";
+          return `<button class="row" type="button" data-student-id="${escapeHtml(row.student_id)}"><strong>#${row.rank}</strong><span>${escapeHtml(row.student_name)}${detail}</span><span class="pill">${value}</span></button>`;
         }).join("") : `<div class="muted">No scores yet.</div>`;
+        document.querySelectorAll("[data-student-id]").forEach(row => {
+          row.addEventListener("click", () => loadStudentDetails(row.dataset.studentId));
+        });
+        if (selectedStudentId && rows.some(row => row.student_id === selectedStudentId)) {
+          document.querySelectorAll("[data-student-id]").forEach(row => {
+            row.classList.toggle("selected", row.dataset.studentId === selectedStudentId);
+          });
+        }
       } catch (error) {
         el("leaderboard").innerHTML = `<div class="row error"><span>!</span><span>Leaderboard unavailable.</span><span></span></div>`;
       }
@@ -336,40 +500,26 @@
 
     async function loadProfile() {
       try {
-        const data = await apiFetch("/game/profile");
+        const query = ctx.chapterId ? `?chapterId=${encodeURIComponent(ctx.chapterId)}` : "";
+        const data = await apiFetch(`/game/profile${query}`);
         const skills = data.skills || [];
         const badges = data.badges || [];
         el("skillXp").innerHTML = skills.length ? skills.slice(0, 8).map(row => (
           `<div class="row"><span>XP</span><span>${escapeHtml(row.skill_name)}</span><span class="pill">${row.xp}</span></div>`
-        )).join("") : `<div class="muted">Play a round to earn XP.</div>`;
+        )).join("") : `<div class="muted">No skills earned for this chapter yet.</div>`;
         el("badges").innerHTML = badges.length ? badges.slice(0, 10).map(row => (
-          `<div class="row"><span>*</span><span>${escapeHtml(row.badge_name)}</span><span class="muted">${new Date(row.earned_at).toLocaleDateString()}</span></div>`
-        )).join("") : `<div class="muted">No badges yet.</div>`;
+          `<div class="row"><span class="gold-stars">${goldStars(row.badge_stars)}</span><span>${escapeHtml(row.badge_name)}</span><span class="muted">${new Date(row.earned_at).toLocaleDateString()}</span></div>`
+        )).join("") : `<div class="muted">No badges earned for this chapter yet.</div>`;
       } catch (error) {
         el("skillXp").innerHTML = `<div class="muted">Stats unavailable.</div>`;
         el("badges").innerHTML = `<div class="muted">Badges unavailable.</div>`;
       }
     }
 
-    async function loadModuleSkills() {
-      if (!ctx.moduleId) return;
-      try {
-        const data = await apiFetch(`/student/module-skills?moduleId=${encodeURIComponent(ctx.moduleId)}`);
-        const result = (data.results || [])[0] || {};
-        moduleSkills = Array.isArray(result.skills) ? result.skills : [];
-        el("moduleSkills").innerHTML = moduleSkills.length ? moduleSkills.slice(0, 8).map(skill => (
-          `<div class="row"><span>Skill</span><span>${escapeHtml(skill.title)}</span><span class="pill">${escapeHtml(skill.confidence || "guide")}</span></div>`
-        )).join("") : `<div class="muted">No module-guide skills found yet.</div>`;
-      } catch (error) {
-        el("moduleSkills").innerHTML = `<div class="muted">Module guide skills unavailable.</div>`;
-      }
-    }
-
     async function refreshAll() {
       await Promise.all([
         loadLeaderboard(currentMetric),
-        loadProfile(),
-        loadModuleSkills()
+        loadProfile()
       ]);
     }
 
@@ -384,10 +534,17 @@
     el("backBtn").addEventListener("click", goBack);
     el("playBtn").addEventListener("click", () => { window.location.href = gameUrl(); });
     el("refreshBtn").addEventListener("click", refreshAll);
+    el("closeStudentModal").addEventListener("click", closeStudentModal);
+    el("studentModal").addEventListener("click", event => {
+      if (event.target === el("studentModal")) closeStudentModal();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeStudentModal();
+    });
 
     (async function init() {
       el("contextLine").textContent = contextLabel();
-      el("heroText").textContent = `Scores, XP, accuracy, skills, and badges for ${contextLabel()}.`;
+      el("heroText").textContent = `Shared practice totals and game contributions for ${contextLabel()}.`;
       if (!(await requireAuth())) return;
       await refreshAll();
     })();

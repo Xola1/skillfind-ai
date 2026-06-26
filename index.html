@@ -1206,6 +1206,8 @@
           <div class="practice-game-card">
             <div class="practice-game-title">🎮 Practice Game</div>
             <button class="action-btn" id="btnWordBuilder">🔤 Word Builder</button>
+            <button class="action-btn" id="btnCrossword">Crossword</button>
+            <button class="action-btn" id="btnLeaderboard">Leaderboard</button>
             <button class="action-btn" id="btnInvaderChallenge">🚀 Invader Challenge</button>
           </div>
         </div>
@@ -2262,9 +2264,11 @@
     $("btnQuiz").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("quiz.html"); });
     $("btnFlashcard").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("flashcard.html"); });
     $("btnWordBuilder").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("word-builder.html"); });
+    $("btnCrossword").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("crossword.html"); });
     $("btnChapterStudy").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("chapter-study.html"); });
     $("btnQuestionPredictor").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("question-predictor.html"); });
     $("btnInvaderChallenge").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("invader-challenge.html"); });
+    $("btnLeaderboard").addEventListener("click", () => { ui.actionButtons.classList.remove("open"); openTool("leaderboard.html"); });
     $("examStudySidebarBtn").addEventListener("click", () => {
       openEmbeddedPage("Exam Study", "exam-study.html");
     });

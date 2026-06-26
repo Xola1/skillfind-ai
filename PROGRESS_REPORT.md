@@ -13,12 +13,14 @@ The prototype has also started real-world validation. Three real students have b
 - Student authentication through Supabase.
 - Student role validation before accessing the learning interface.
 - Student dashboard with enrolled modules and chapters.
+- Mobile-friendly student learning shell with sidebar navigation, embedded study pages, and quick chapter actions.
 - Chapter-based AI tutor chat using uploaded chapter content.
 - Chat history storage through the `chat_messages` table.
 - Quiz, flashcard, chapter-study, exam-study, test-study, and question-predictor pages.
 - Exam question paper predictor and test question paper predictor.
 - Predictor goal: generate practice/mock question papers that predict approximately 75% of likely real exam/test coverage by analyzing uploaded notes, previous exam papers, previous test papers, extracted question banks, and topic patterns.
 - My Library page that reads module guide content and recommends external learning resources.
+- Shared frontend configuration through `config.js` and `frontend/config.js`, with local API fallback and a production API URL.
 - Admin login and admin dashboard.
 - Admin course creation and deletion.
 - Admin module creation, editing, and deletion.
@@ -29,7 +31,10 @@ The prototype has also started real-world validation. Three real students have b
 - Exam/test upload, listing, viewing, deletion, and AI question extraction flow.
 - Student gamified challenge pages and leaderboard tracking.
 - Student vocabulary word-builder practice page.
+- Quiz and flashcard activity attempt tracking with per-chapter leaderboards.
+- Invader Challenge game mode with score, XP, accuracy, badges, module skills, and leaderboard pages.
 - Module skills and AI learning skills pages with corresponding backend routes.
+- Admin leaderboard and learning analytics panel.
 - Supabase PostgreSQL data model for courses, modules, profiles, enrollments, chapters, chunks, exams, question banks, module guides, progress, and predictions.
 - Backend health endpoints and route debugging support.
 
@@ -37,10 +42,11 @@ The prototype has also started real-world validation. Three real students have b
 
 The application has moved beyond a static mockup. It has real frontend pages, backend routes, database tables, authentication checks, and storage workflows. The main remaining work is testing, polishing, deployment, and strengthening reliability around AI/OCR outputs.
 
-The current project appears to be running locally, with frontend pages calling the backend at:
+The current project supports local development and a hosted backend API configuration. Shared frontend configuration files define:
 
 ```text
-http://localhost:5050
+Local API URL: http://localhost:5050
+Production API URL: https://skillfind-ai.onrender.com
 ```
 
 The backend hosts static assets from `frontend/` while the repository also includes root-level HTML pages for student and admin flows.
@@ -55,21 +61,23 @@ Backend API groups currently mounted by `server/server.js` include:
 - `/word-builder`
 - `/exam-practice`
 - `/api/questions`
+- `/student/module-skills`
 - `/student`
 
-The planned near-term deployment is Netlify free tier for the frontend/prototype. Because the current backend is an Express server, Netlify deployment will require either a separate hosted backend API or a migration of selected backend routes into Netlify Functions. The current frontend files still contain hardcoded local API URLs, so those URLs must be changed to a deployable environment-based API configuration before the Netlify version can work fully.
+The planned frontend deployment remains Netlify free tier for the prototype, while the backend is configured separately as a Node.js/Express API. The HTML pages now read API settings from shared frontend config files instead of directly hardcoding `localhost:5050` in each page. Production readiness still requires confirming the deployed frontend URL, CORS allowlist, Supabase environment variables, and hosted backend health in the target environment.
 
 Key project files reviewed:
 
 - `index.html` - main student learning interface.
 - `library.html` - student resource recommendation library.
-- `quiz.html`, `flashcard.html`, `chapter-study.html`, `exam-study.html`, `test-study.html`, `test_study.html`, `question-predictor.html`, `invader-challenge.html`, `invader-leaderboard.html`, `word-builder.html` - student study and game tools.
+- `quiz.html`, `flashcard.html`, `chapter-study.html`, `exam-study.html`, `test-study.html`, `test_study.html`, `question-predictor.html`, `invader-challenge.html`, `leaderboard.html`, `word-builder.html` - student study and game tools.
 - `frontend/module-skills.html` - module skills / AI skill-building page.
 - `frontend/admin/*.html` and `frontend/admin/admin.js` - admin dashboard and management screens.
+- `config.js` and `frontend/config.js` - frontend API and Supabase browser configuration.
 - `server/server.js` - main Express backend and API route mounting.
 - `server/routes/*.js` - quiz, flashcard, study, exam, test, question extraction, AI training, activity, game, module skills, and word-builder APIs.
 - `mySchema.sql` and `supabase/migrations/*` - database schema and migrations.
-- `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/FLOW_ADMIN_STUDENT.md`, `docs/MIGRATION_PLAN.md`, `docs/AIoverview.md` - architecture and planning notes.
+- `docs/ARCHITECTURE.md`, `docs/FLOW_ADMIN_STUDENT.md`, `docs/MIGRATION_PLAN.md`, `docs/AIoverview.md` - architecture and planning notes.
 
 ## 2. Functional Requirements Document
 
@@ -103,6 +111,9 @@ The system must support an AI-powered learning platform where administrators upl
 | FR-S13 | Students should be able to receive predicted exam question paper support. | Implemented/prototype |
 | FR-S14 | Students should be able to receive predicted test question paper support. | Implemented/prototype |
 | FR-S15 | The predictor should aim to cover approximately 75% of likely real exam/test content using uploaded notes, previous papers, tests, and AI pattern analysis. | Implemented/prototype; needs validation |
+| FR-S16 | Students should be able to access gamified practice activities, including Word Builder and Invader Challenge. | Implemented/prototype |
+| FR-S17 | Students should be able to see chapter-level quiz, flashcard, and game leaderboards. | Implemented/prototype |
+| FR-S18 | Students should be able to review module skills generated from module guide content. | Implemented/prototype |
 
 ### Admin Functional Requirements
 
@@ -123,6 +134,7 @@ The system must support an AI-powered learning platform where administrators upl
 | FR-A13 | Admins must be able to upload previous exams, tests, and mock exams. | Implemented |
 | FR-A14 | Admins must be able to process exam files and extract questions using AI. | Implemented/prototype |
 | FR-A15 | Admins must be able to delete exams and related stored data. | Implemented |
+| FR-A16 | Admins should be able to view learning analytics and leaderboard summaries. | Implemented/prototype |
 
 ### Backend Functional Requirements
 
@@ -137,6 +149,8 @@ The system must support an AI-powered learning platform where administrators upl
 | FR-B07 | The backend must support AI provider fallback or fallback responses where possible. | Implemented/prototype |
 | FR-B08 | The backend should minimize token usage when using free AI APIs. | Partially implemented; ongoing limitation |
 | FR-B09 | The backend should gracefully handle cases where token limits prevent large inserts, long prompts, or complete AI processing. | Partially implemented; needs improvement |
+| FR-B10 | The frontend should use a shared API configuration instead of page-specific hardcoded API URLs. | Implemented |
+| FR-B11 | The backend should support student activity attempts, game scores, badges, and leaderboards. | Implemented/prototype |
 
 ## 3. Non-Functional Requirements Document
 
@@ -154,7 +168,7 @@ The system must support an AI-powered learning platform where administrators upl
 | Auditability | Uploaded content, generated chunks, chat messages, and student progress should be traceable through database records. |
 | Backup and Recovery | Supabase database and storage backups should be configured before production deployment. |
 | Browser Compatibility | The MVP should be tested in current Chrome/Edge browsers because the frontend uses standard HTML, CSS, JavaScript, fetch, iframes, and CDN scripts. |
-| Deployment | The planned deployment is Netlify free tier for the frontend. The local backend currently targets `localhost:5050`; production deployment will require environment variables, hosted backend URL updates, CORS configuration, and secured API keys. |
+| Deployment | The planned deployment is Netlify free tier for the frontend with a separately hosted Express backend. Frontend config now switches between `http://localhost:5050` locally and `https://skillfind-ai.onrender.com` for production-like browser use. Production deployment still requires environment variable review, CORS confirmation, and secured API keys. |
 | API Cost Control | The MVP currently depends on free API tiers. Token limits must be controlled by chunking content, limiting prompt size, using fallback generation, and avoiding very large inserts in one request. |
 
 ## 4. Stakeholder Mapping
@@ -185,6 +199,9 @@ The system must support an AI-powered learning platform where administrators upl
 - As a student, I want predicted or practice questions so that I can prepare for likely exam topics.
 - As a student, I want an exam question paper predictor that can generate a likely mock paper based on notes and previous exams.
 - As a student, I want a test question paper predictor that can generate likely test questions based on notes and previous tests.
+- As a student, I want gamified practice modes so that revision feels more engaging.
+- As a student, I want leaderboards, badges, and skill XP so that I can track progress and compare performance.
+- As a student, I want module-skill guidance so that I understand which skills the module is building.
 
 ### Admin User Stories
 
@@ -198,13 +215,15 @@ The system must support an AI-powered learning platform where administrators upl
 - As an admin, I want to manage student enrollments so that students only access the modules assigned to them.
 - As an admin, I want to approve or reject enrollment requests so that module access is controlled.
 - As an admin, I want safe delete actions so that removed courses/modules/chapters also clean up related data.
+- As an admin, I want to view leaderboard and learning analytics so that I can monitor student engagement.
 
 ## 6. Challenges or Support Required
 
 ### Current Challenges
 
-- The frontend currently uses hardcoded local API URLs such as `http://localhost:5050`, which must be changed or configured for deployment.
-- The planned frontend deployment is Netlify free tier, but the current Express backend cannot run as a normal static Netlify site. The project needs either a separately hosted backend or selected APIs converted to Netlify Functions.
+- The frontend now uses shared API config files, but the hosted frontend and backend still need deployment verification together.
+- The planned frontend deployment is Netlify free tier, but the Express backend must remain separately hosted or selected APIs must be converted to Netlify Functions.
+- The production backend URL currently points to `https://skillfind-ai.onrender.com`; health checks, CORS, environment variables, and Supabase credentials must be verified after deployment.
 - AI and OCR quality depends on external providers and API keys, so fallback behavior and error handling need more testing.
 - The MVP currently uses free API tiers, which creates token and rate-limit constraints. Because of those limits, the system cannot always send strong/large prompts to AI endpoints, cannot always process all document content at once, and may not be able to insert all generated data in one pass.
 - Some large flows, especially exam/test question extraction and prediction, need batching or summarization because full notes, previous papers, tests, and extracted questions can exceed free API token limits.
@@ -213,15 +232,15 @@ The system must support an AI-powered learning platform where administrators upl
 - Some documents show older planning notes mentioning local JSON storage, while the code now uses Supabase. Documentation should be updated to avoid confusion.
 - Full end-to-end testing is still required for student login, admin login, uploads, enrollment, AI chat, quiz, flashcard, exam extraction, and deletion flows.
 - Security review is needed before production, especially around service-role keys, admin routes, CORS, and storage bucket permissions.
-- The UI is functional, but final polish, accessibility testing, and mobile responsiveness verification are still needed.
-- Deployment has not yet been finalized in the project files reviewed, but the current plan is Netlify free tier for the frontend.
+- The UI is functional and includes mobile styling across the student tool pages, but final accessibility testing and cross-device verification are still needed.
+- Duplicate test-study files exist: `test-study.html` and `test_study.html` currently have identical content. The app links to `test_study.html`, so the duplicate should be intentionally kept, redirected, or removed before final cleanup.
 
 ### Support Required
 
 - Supabase production project setup, including tables, migrations, RLS policies, storage buckets, and backups.
-- Production hosting for the Node.js backend, or conversion of core API routes into Netlify Functions.
-- Netlify free tier deployment setup for the static frontend.
-- Environment-based API URL configuration so frontend files no longer depend on `http://localhost:5050`.
+- Production hosting verification for the Node.js backend, or conversion of selected API routes into Netlify Functions if a single Netlify-only deployment is required.
+- Netlify free tier deployment setup for the static frontend, including final confirmation of the public frontend URL.
+- Environment/config review so frontend pages, backend CORS settings, and Supabase browser keys match the deployed domains.
 - API keys for selected AI/OCR providers.
 - Better paid or higher-limit AI/OCR API access if the predictor and extraction flows must process full documents reliably.
 - Batching strategy for large inserts and AI-generated exam/test question data.
@@ -243,14 +262,22 @@ The following pages exist in the repository and can be used for screenshots or a
 - Chapter study mode: `chapter-study.html`
 - Exam study mode: `exam-study.html`
 - Test study mode: `test_study.html`
+- Duplicate test study entry file: `test-study.html`
 - Question predictor: `question-predictor.html`
+- Word Builder practice game: `word-builder.html`
+- Invader Challenge game: `invader-challenge.html`
+- Practice leaderboard/profile page: `leaderboard.html`
+- Module skills page: `frontend/module-skills.html`
 - Admin login: `frontend/admin/adminlogin.html`
 - Admin dashboard: `frontend/admin/admin.html`
-- Admin courses/modules: `frontend/admin/admin.html` and `frontend/admin/module.html`
+- Admin courses: `frontend/admin/admin.html` and `frontend/admin/course.html`
+- Admin modules: `frontend/admin/module.html`
 - Admin chapters: `frontend/admin/chapter.html`
 - Admin module guides: `frontend/admin/module-guide.html`
+- Admin exams/tests: `frontend/admin/exam.html`
 - Admin enrollment requests: `frontend/admin/request.html`
-- Admin students: `frontend/admin/students.html`
+- Admin students/enrollments: `frontend/admin/students.html`
+- Admin student redirect/helper page: `frontend/admin/student.html`
 
 ### Suggested Demo Flow
 
@@ -264,7 +291,8 @@ The following pages exist in the repository and can be used for screenshots or a
 8. Log in as the student.
 9. Select the enrolled module and chapter.
 10. Ask the AI tutor a chapter-specific question.
-11. Open quiz, flashcard, chapter study, exam study, and My Library pages.
+11. Open quiz, flashcard, chapter study, exam study, test study, Word Builder, Invader Challenge, and My Library pages.
+12. Submit a quiz/flashcard/game attempt and review leaderboard or analytics results.
 
 ### Screenshot Checklist
 
@@ -273,11 +301,16 @@ The following pages exist in the repository and can be used for screenshots or a
 - AI tutor chat response.
 - Quiz or flashcard screen.
 - Exam study or test study screen.
+- Word Builder practice screen.
+- Invader Challenge gameplay screen.
+- Invader leaderboard, badges, and skill XP screen.
 - My Library recommendations screen.
+- Module skills page.
 - Admin dashboard.
 - Admin chapter upload/list screen.
 - Admin students/enrollment management screen.
 - Admin exam upload/list screen.
+- Admin leaderboard and learning analytics panel.
 
 ### Demo Link
 
@@ -291,10 +324,10 @@ Planned hosted prototype:
 
 ```text
 Netlify free tier frontend URL: https://skillfinderai.netlify.app/login.html
-Backend API URL: pending
+Backend API URL: https://skillfind-ai.onrender.com
 ```
 
-If the frontend is opened directly from files, use the relevant `.html` pages in the project root and `frontend/admin` folder. For a hosted demo, update this section with the deployed Netlify frontend URL and the hosted backend API URL.
+If the frontend is opened directly from files, use the relevant `.html` pages in the project root and `frontend/admin` folder. The frontend config chooses the local API URL for `file:`, `localhost`, and `127.0.0.1`, and the production API URL for hosted browser use. For a final hosted demo, verify the Netlify frontend URL, Render backend health endpoint, and CORS settings.
 
 ## 8. Overall Summary
 
@@ -302,4 +335,4 @@ The SkillFind AI MVP has made strong progress. The repository contains a functio
 
 The MVP has also onboarded three real students so far, and the exam/test predictor is a key differentiator because it aims to predict approximately 75% of likely real assessment coverage from notes, past exams, past tests, and extracted question patterns.
 
-The next milestone should focus on production readiness: Netlify free tier frontend deployment, backend hosting or Netlify Function migration, testing all flows, cleaning up documentation, securing environment variables and admin routes, improving error handling, validating AI/OCR accuracy, and designing around free API token limits.
+The next milestone should focus on production readiness: Netlify free tier frontend deployment, hosted backend verification, CORS and environment review, testing all flows, cleaning up documentation, securing environment variables and admin routes, improving error handling, validating AI/OCR accuracy, and designing around free API token limits.

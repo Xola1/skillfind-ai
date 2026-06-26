@@ -22,6 +22,7 @@ import testRoutes from "./routes/test-server.js";
 import moduleSkillsRouter from "./routes/module-skills-server.js";
 import gameRouter from "./routes/game-server.js";
 import wordBuilderRouter from "./routes/word-builder-server.js";
+import crosswordRouter from "./routes/crossword-server.js";
 import examPracticeRouter from "./routes/exam-practice-server.js";
 import activityRouter from "./routes/activity-server.js";
 import adminDeleteRouter from "./routes/admin-delete.js";  // <-- ADD THIS
@@ -29,11 +30,13 @@ import adminDeleteRouter from "./routes/admin-delete.js";  // <-- ADD THIS
 const app = express();
 const allowedCorsOrigins = new Set([
   "https://skillfinderai.netlify.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "http://localhost:5050",
   "http://127.0.0.1:5050"
 ]);
 
-for (const origin of String(process.env.CORS_ORIGINS || "").split(",")) {
+for (const origin of String(process.env.CORS_ORIGINS || process.env.FRONTEND_ORIGINS || "").split(",")) {
   const trimmed = origin.trim();
   if (trimmed) allowedCorsOrigins.add(trimmed);
 }
@@ -45,7 +48,9 @@ app.use(cors({
       return;
     }
     callback(new Error(`CORS blocked origin: ${origin}`));
-  }
+  },
+  methods: ["GET", "POST", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(process.cwd(), "frontend")));
@@ -1887,6 +1892,7 @@ app.use("/study", studyRouter);
 app.use("/game", gameRouter);
 app.use("/activity", activityRouter);
 app.use("/word-builder", wordBuilderRouter);
+app.use("/crossword", crosswordRouter);
 app.use("/exam-practice", examPracticeRouter);
 app.use("/api/questions", questionExtractorRouter);
 app.use("/student", examRoutes);

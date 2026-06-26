@@ -105,6 +105,24 @@
     .setup h1 { margin: 0; font-size: clamp(30px, 5vw, 52px); line-height: 1; }
     .setup p { margin: 0; max-width: 680px; color: var(--muted); line-height: 1.55; }
     .settings { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .leaderboard {
+      width: min(520px, 100%);
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+    .leader-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      padding: 9px 11px;
+      font-size: 13px;
+    }
+    .leader-row span:last-child { color: var(--brand2); font-weight: 900; }
     select {
       min-height: 42px;
       border: 1px solid var(--line);
@@ -349,6 +367,9 @@
         <button class="btn primary" type="button" id="startBtn">Start</button>
       </div>
       <div id="setupStatus" style="color:var(--muted)">Missing-word questions are loaded from your saved chapter question bank first.</div>
+      <div class="leaderboard" id="practiceLeaderboard">
+        <p>Loading practice leaderboard...</p>
+      </div>
     </section>
 
     <section class="game hidden" id="game">
@@ -398,7 +419,11 @@
       lives: 3,
       active: false,
       spawnTimer: null,
-      letterNodes: []
+      letterNodes: [],
+      correctWords: 0,
+      mistakes: 0,
+      startTime: null,
+      attemptSaved: false
     };
 
     function escapeHtml(value) {
@@ -460,6 +485,30 @@
       const data = await response.json();
       if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
       return data;
+    }
+
+    function formatTime(seconds) {
+      const total = Number(seconds) || 0;
+      return `${Math.floor(total / 60)}m ${total % 60}s`;
+    }
+
+    async function loadPracticeLeaderboard() {
+      const container = el("practiceLeaderboard");
+      if (!container || !ctx.chapterId) return;
+      try {
+        const data = await apiFetch(`/activity/practice-leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&limit=8`);
+        const rows = data.leaderboard || [];
+        container.innerHTML = rows.length ? rows.map(row => `
+          <div class="leader-row">
+            <strong>#${row.rank}</strong>
+            <span>${escapeHtml(row.student_name)} - ${escapeHtml(row.activity_label)}</span>
+            <span>${row.normalized_score}</span>
+          </div>
+        `).join("") : `<p>No practice leaderboard scores yet.</p>`;
+      } catch (error) {
+        console.warn("Could not load practice leaderboard:", error);
+        container.innerHTML = `<p>Leaderboard unavailable.</p>`;
+      }
     }
 
     function normalizeWord(value) {
@@ -600,6 +649,7 @@
 
       if (letter !== expected) {
         state.lives -= 1;
+        state.mistakes += 1;
         updateHud();
         showMessage(`Wrong letter. Find ${expected}.`);
         if (state.lives <= 0) finishGame();
@@ -613,6 +663,7 @@
 
       if (state.built === state.target) {
         state.score += 35;
+        state.correctWords += 1;
         updateHud();
         showMessage(`Built ${state.target}`, 900);
         setTimeout(() => {
@@ -631,15 +682,52 @@
       applyLetter(letter);
     }
 
-    function finishGame() {
+    async function saveWordBuilderAttempt(complete) {
+      if (state.attemptSaved) return;
+      state.attemptSaved = true;
+      const totalWords = state.questions.length || 0;
+      const incorrect = Math.max(0, totalWords - state.correctWords);
+      const accuracy = totalWords ? Math.round((state.correctWords / totalWords) * 100) : 0;
+      const timeTaken = state.startTime ? Math.round((Date.now() - state.startTime) / 1000) : 0;
+      try {
+        await apiFetch("/activity/attempts", {
+          method: "POST",
+          body: JSON.stringify({
+            activityType: "word_builder",
+            moduleId: ctx.moduleId,
+            chapterId: ctx.chapterId,
+            score: state.correctWords,
+            maxScore: totalWords,
+            accuracy,
+            correctCount: state.correctWords,
+            incorrectCount: incorrect,
+            participationCount: totalWords,
+            timeTaken,
+            metadata: {
+              chapterTitle: ctx.chapterTitle,
+              rawScore: state.score,
+              mistakes: state.mistakes,
+              complete
+            }
+          })
+        });
+      } catch (error) {
+        console.warn("Could not save word builder leaderboard attempt:", error);
+      }
+    }
+
+    async function finishGame() {
       state.active = false;
       clearLetters();
       el("game").classList.add("hidden");
       el("hud").classList.add("hidden");
       el("setup").classList.remove("hidden");
       const complete = state.current >= state.questions.length;
-      setStatus(`${complete ? "Great spelling practice." : "Game ended."} Score: ${state.score}.`);
+      await saveWordBuilderAttempt(complete);
+      const timeTaken = state.startTime ? Math.round((Date.now() - state.startTime) / 1000) : 0;
+      setStatus(`${complete ? "Great spelling practice." : "Game ended."} Score: ${state.score}. Time: ${formatTime(timeTaken)}.`);
       el("startBtn").textContent = "Play Again";
+      loadPracticeLeaderboard();
     }
 
     async function startGame() {
@@ -657,6 +745,10 @@
         state.current = 0;
         state.score = 0;
         state.lives = 3;
+        state.correctWords = 0;
+        state.mistakes = 0;
+        state.startTime = Date.now();
+        state.attemptSaved = false;
         state.active = true;
         el("setup").classList.add("hidden");
         el("game").classList.remove("hidden");
@@ -684,6 +776,7 @@
       if (!(await requireAuth())) return;
       el("contextLine").textContent = contextLabel();
       if (!ctx.chapterId) setStatus("No chapter selected. Go back to Learning and select a chapter first.");
+      loadPracticeLeaderboard();
     })();
   </script>
 </body>

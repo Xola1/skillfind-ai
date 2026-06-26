@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkillFind AI - Crossword</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(15, 27, 46, .84);
+      --text: #f4f7fb;
+      --muted: #95a3b8;
+      --line: rgba(255,255,255,.12);
+      --brand: #8ab4ff;
+      --brand2: #a6ffda;
+      --danger: #ff7a7a;
+      --warn: #ffd166;
+      --cell: clamp(30px, 5.2vw, 42px);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(138,180,255,.20), transparent 30%),
+        radial-gradient(circle at 82% 4%, rgba(166,255,218,.13), transparent 28%),
+        linear-gradient(180deg, #08172b, #030711 70%);
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+
+    .topbar {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3, 7, 17, .76);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 13px;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    .btn.primary {
+      border-color: transparent;
+      color: #06101f;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+    }
+
+    .btn.danger {
+      border-color: rgba(255,122,122,.42);
+      background: rgba(255,122,122,.13);
+      color: #ffd7d7;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .context { min-width: 0; }
+    .context-title { font-weight: 950; }
+    .context-sub {
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .screen {
+      width: min(1240px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 18px 0 24px;
+    }
+
+    .setup {
+      width: min(880px, 100%);
+      margin: min(9vh, 80px) auto 0;
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      padding: 24px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+
+    .setup h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1;
+    }
+
+    .setup p {
+      margin: 0;
+      max-width: 700px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .level-card {
+      width: min(360px, 100%);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      padding: 12px;
+      text-align: left;
+    }
+
+    .level-card strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .level-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .leaderboard {
+      width: min(520px, 100%);
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .leader-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      padding: 9px 11px;
+      font-size: 13px;
+    }
+
+    .leader-row span:last-child {
+      color: var(--brand2);
+      font-weight: 900;
+    }
+
+    .settings {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .game {
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(280px, 380px);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel,
+    .clues-panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(3, 7, 17, .52);
+      box-shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+
+    .board-panel {
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .board-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .scoreline {
+      color: var(--brand2);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .timer {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 88px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      color: var(--warn);
+      padding: 10px 12px;
+      font-weight: 950;
+    }
+
+    .timer.danger {
+      border-color: rgba(255,122,122,.52);
+      color: #ffb4b4;
+    }
+
+    .crossword-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), var(--cell));
+      grid-template-rows: repeat(var(--rows), var(--cell));
+      gap: 2px;
+      width: max-content;
+      margin: 0 auto;
+      background: rgba(255,255,255,.08);
+      border: 2px solid rgba(255,255,255,.16);
+      padding: 2px;
+    }
+
+    .cell {
+      position: relative;
+      width: var(--cell);
+      height: var(--cell);
+      background: #f8fafc;
+      color: #0b1220;
+    }
+
+    .cell input {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      color: #0b1220;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: clamp(17px, 3vw, 24px);
+      font-weight: 950;
+      padding: 10px 2px 2px;
+    }
+
+    .cell input:focus {
+      outline: 3px solid rgba(138,180,255,.65);
+      outline-offset: -3px;
+      background: rgba(138,180,255,.18);
+    }
+
+    .cell-number {
+      position: absolute;
+      top: 2px;
+      left: 3px;
+      z-index: 1;
+      color: #334155;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .cell.correct { background: #dcfce7; }
+    .cell.wrong { background: #fee2e2; }
+    .cell.active { box-shadow: inset 0 0 0 3px rgba(166,255,218,.55); }
+
+    .clues-panel {
+      padding: 14px;
+      max-height: calc(100vh - 110px);
+      overflow: auto;
+    }
+
+    .clues-panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .clue-group + .clue-group {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .clue-group h3 {
+      margin: 0 0 8px;
+      color: var(--brand2);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .clue-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .clue {
+      width: 100%;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 10px;
+      background: rgba(255,255,255,.055);
+      color: var(--text);
+      padding: 9px 10px;
+      line-height: 1.35;
+    }
+
+    .clue:hover,
+    .clue.selected {
+      border-color: rgba(166,255,218,.44);
+      background: rgba(166,255,218,.10);
+    }
+
+    .clue small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(6px);
+    }
+
+    .dialog {
+      width: min(440px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(8, 18, 32, .96);
+      box-shadow: 0 22px 70px rgba(0,0,0,.5);
+      padding: 18px;
+    }
+
+    .dialog h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .dialog p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .dialog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    .debug-panel {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(0,0,0,.26);
+      padding: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .debug-panel summary {
+      cursor: pointer;
+      color: var(--brand2);
+      font-weight: 850;
+    }
+
+    .debug-panel pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      margin: 10px 0 0;
+      color: #dbeafe;
+    }
+
+    @media (max-width: 900px) {
+      .game {
+        grid-template-columns: 1fr;
+      }
+      .clues-panel {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root { --cell: clamp(25px, 8.6vw, 34px); }
+      body { min-height: 100dvh; }
+      .topbar {
+        min-height: 58px;
+        padding: calc(7px + env(safe-area-inset-top)) 10px 7px;
+      }
+      .context-sub { display: none; }
+      .screen {
+        width: min(100% - 14px, 1240px);
+        padding-top: 10px;
+      }
+      .setup,
+      .board-panel,
+      .clues-panel {
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .setup {
+        margin-top: 14px;
+      }
+      .board-tools {
+        grid-template-columns: 1fr;
+      }
+      .timer {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <button class="btn icon-btn" type="button" onclick="goBackToLearning()" aria-label="Go back" title="Go back">&lsaquo;</button>
+    <div class="context">
+      <div class="context-title">Crossword</div>
+      <div class="context-sub" id="contextLine">Loading chapter...</div>
+    </div>
+  </header>
+
+  <main class="screen">
+    <section class="setup" id="setup">
+      <h1>Crossword Puzzle</h1>
+      <p>Play a timed chapter crossword. Start at Level 1, complete each puzzle, then continue to the next level.</p>
+
+      <div class="level-card" id="currentLevelCard"></div>
+
+      <div class="settings">
+        <button class="btn primary" type="button" id="playBtn">Play</button>
+        <button class="btn hidden" type="button" id="resumeBtn">Resume</button>
+      </div>
+      <div id="setupStatus" class="status">Play starts at Level 1.</div>
+      <div class="leaderboard" id="practiceLeaderboard">
+        <div class="status">Loading practice leaderboard...</div>
+      </div>
+      <details class="debug-panel" id="debugPanel">
+        <summary>Crossword debug</summary>
+        <pre id="debugOutput">No generation attempt yet.</pre>
+      </details>
+    </section>
+
+    <section class="game hidden" id="game">
+      <section class="board-panel">
+        <div class="board-tools">
+          <div>
+            <div class="scoreline" id="scoreline">Level 1 - 0 of 0 letters correct</div>
+            <div class="status" id="levelMeta">5 clues</div>
+          </div>
+          <div class="settings">
+            <div class="timer" id="timer">08:00</div>
+            <button class="btn" id="checkBtn" type="button">Check</button>
+            <button class="btn" id="devCompleteBtn" type="button">Complete Level</button>
+            <button class="btn" id="pauseBtn" type="button">Pause</button>
+            <button class="btn danger" id="restartBtn" type="button">Restart Level</button>
+          </div>
+        </div>
+        <div id="board" class="crossword-grid" aria-label="Crossword board"></div>
+      </section>
+
+      <aside class="clues-panel">
+        <h2 id="puzzleTitle">Chapter Crossword</h2>
+        <div class="clue-group">
+          <h3>Across</h3>
+          <div class="clue-list" id="acrossClues"></div>
+        </div>
+        <div class="clue-group">
+          <h3>Down</h3>
+          <div class="clue-list" id="downClues"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="dialog-backdrop hidden" id="dialogBackdrop" role="dialog" aria-modal="true">
+    <section class="dialog">
+      <h2 id="dialogTitle"></h2>
+      <p id="dialogText"></p>
+      <div class="dialog-actions" id="dialogActions"></div>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="frontend/config.js"></script>
+  <script>
+    const API_BASE = window.APP_CONFIG.API_BASE;
+    const STORAGE_CONTEXT_KEY = "skillfind:selectedContext";
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const el = id => document.getElementById(id);
+
+    const GRID_SIZE = 19;
+    const LEVELS = [
+      { level: 1, clues: 5, minutes: 8 },
+      { level: 2, clues: 8, minutes: 6 },
+      { level: 3, clues: 10, minutes: 4 }
+    ];
+
+    const state = {
+      entries: [],
+      grid: [],
+      minRow: 0,
+      maxRow: GRID_SIZE - 1,
+      minCol: 0,
+      maxCol: GRID_SIZE - 1,
+      selectedId: "",
+      level: 1,
+      remainingSeconds: 0,
+      timerId: null,
+      locked: false,
+      levelStartTime: null,
+      savedAttemptKeys: new Set()
+    };
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]);
+    }
+
+    function getSavedContext() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_CONTEXT_KEY) || "{}"); } catch {}
+      const p = new URLSearchParams(window.location.search);
+      return {
+        moduleId: p.get("moduleId") || saved.moduleId || "",
+        moduleName: p.get("moduleName") || saved.moduleName || "Module",
+        chapterId: p.get("chapterId") || saved.chapterId || "",
+        chapterTitle: p.get("chapterTitle") || saved.chapterTitle || "Chapter",
+        chapterNumber: p.get("chapterNumber") || saved.chapterNumber || "",
+        chapterIds: p.get("chapterIds") || saved.chapterIds || "",
+        source: p.get("source") || saved.source || ""
+      };
+    }
+
+    const ctx = getSavedContext();
+
+    function contextLabel() {
+      return `${ctx.moduleName} ${ctx.chapterNumber ? `Chapter ${ctx.chapterNumber}: ` : ""}${ctx.chapterTitle}`.trim();
+    }
+
+    function contextKey() {
+      return [ctx.moduleId, ctx.chapterIds || ctx.chapterId || "chapter"].join(":");
+    }
+
+    function progressKey() {
+      return `skillfind:crossword:${contextKey()}`;
+    }
+
+    function goBackToLearning() {
+      saveProgress("paused");
+      try { localStorage.setItem(STORAGE_CONTEXT_KEY, JSON.stringify(ctx)); } catch {}
+      const params = new URLSearchParams({ openChat: "1", ...ctx });
+      window.location.href = `index.html?${params.toString()}`;
+    }
+
+    async function getToken() {
+      const { data } = await sb.auth.getSession();
+      return data?.session?.access_token || localStorage.getItem("supabase_token") || "";
+    }
+
+    async function requireAuth() {
+      const { data } = await sb.auth.getSession();
+      if (!data?.session) {
+        window.location.href = "login.html";
+        return false;
+      }
+      localStorage.setItem("supabase_token", data.session.access_token);
+      return true;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+
+    async function loadPracticeLeaderboard() {
+      const container = el("practiceLeaderboard");
+      if (!container || !ctx.chapterId) return;
+      try {
+        const data = await apiFetch(`/activity/practice-leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&limit=8`);
+        const rows = data.leaderboard || [];
+        container.innerHTML = rows.length ? rows.map(row => `
+          <div class="leader-row">
+            <strong>#${row.rank}</strong>
+            <span>${escapeHtml(row.student_name)} - ${escapeHtml(row.activity_label)}</span>
+            <span>${row.normalized_score}</span>
+          </div>
+        `).join("") : `<div class="status">No practice leaderboard scores yet.</div>`;
+      } catch (error) {
+        console.warn("Could not load practice leaderboard:", error);
+        container.innerHTML = `<div class="status">Leaderboard unavailable.</div>`;
+      }
+    }
+
+    function normalizeWord(value) {
+      return String(value || "").replace(/[^a-zA-Z]/g, "").toUpperCase();
+    }
+
+    function levelConfig(level) {
+      return LEVELS.find(item => item.level === normalizeLevel(level)) || LEVELS[0];
+    }
+
+    function normalizeLevel(value) {
+      return Math.max(1, Math.min(parseInt(value, 10) || 1, LEVELS.length));
+    }
+
+    function nextLevelExists() {
+      return state.level < LEVELS.length;
+    }
+
+    function cleanClue(term) {
+      return String(term.clue || term.question || term.explanation || "Key term from this chapter.")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 150);
+    }
+
+    async function loadTerms(level) {
+      const data = await apiFetch("/crossword/generate", {
+        method: "POST",
+        body: JSON.stringify({
+          moduleId: ctx.moduleId,
+          chapterId: ctx.chapterId,
+          chapterIds: ctx.chapterIds,
+          chapterTitle: ctx.chapterTitle,
+          level
+        })
+      });
+
+      renderDebug({
+        responseLevel: data.level,
+        wordCount: data.wordCount,
+        termsReturned: Array.isArray(data.terms) ? data.terms.length : 0,
+        metadata: data.metadata || {},
+        sampleTerms: (data.terms || []).slice(0, 5).map(term => ({
+          answer: term.answer,
+          clue: term.clue,
+          source: term.source
+        }))
+      });
+
+      const config = levelConfig(level);
+      const seen = new Set();
+      return (data.terms || [])
+        .map((term, index) => ({
+          id: `entry-${index}`,
+          word: normalizeWord(term.answer || term.word),
+          clue: cleanClue(term)
+        }))
+        .filter(item => item.word.length >= 3 && item.word.length <= 12)
+        .filter(item => {
+          if (seen.has(item.word)) return false;
+          seen.add(item.word);
+          return true;
+        })
+        .slice(0, Math.max(config.clues, data.wordCount || 0) + 10);
+    }
+
+    function renderDebug(value) {
+      try {
+        el("debugOutput").textContent = JSON.stringify(value, null, 2);
+      } catch {
+        el("debugOutput").textContent = String(value || "No debug data.");
+      }
+    }
+
+    function emptyGrid() {
+      return Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => null));
+    }
+
+    function inside(row, col) {
+      return row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
+    }
+
+    function canPlace(word, row, col, dir, grid) {
+      const dr = dir === "down" ? 1 : 0;
+      const dc = dir === "across" ? 1 : 0;
+      const beforeRow = row - dr;
+      const beforeCol = col - dc;
+      const afterRow = row + dr * word.length;
+      const afterCol = col + dc * word.length;
+      if (inside(beforeRow, beforeCol) && grid[beforeRow][beforeCol]) return false;
+      if (inside(afterRow, afterCol) && grid[afterRow][afterCol]) return false;
+
+      let intersections = 0;
+      for (let i = 0; i < word.length; i += 1) {
+        const r = row + dr * i;
+        const c = col + dc * i;
+        if (!inside(r, c)) return false;
+        const existing = grid[r][c];
+        if (existing && existing !== word[i]) return false;
+        if (existing === word[i]) {
+          intersections += 1;
+          continue;
+        }
+        if (dir === "across") {
+          if (inside(r - 1, c) && grid[r - 1][c]) return false;
+          if (inside(r + 1, c) && grid[r + 1][c]) return false;
+        } else {
+          if (inside(r, c - 1) && grid[r][c - 1]) return false;
+          if (inside(r, c + 1) && grid[r][c + 1]) return false;
+        }
+      }
+      return intersections > 0 || !state.entries.length;
+    }
+
+    function writeWord(entry, row, col, dir, grid) {
+      const dr = dir === "down" ? 1 : 0;
+      const dc = dir === "across" ? 1 : 0;
+      for (let i = 0; i < entry.word.length; i += 1) {
+        grid[row + dr * i][col + dc * i] = entry.word[i];
+      }
+      state.entries.push({ ...entry, row, col, dir });
+    }
+
+    function placeEntry(entry, grid) {
+      if (!state.entries.length) {
+        const row = Math.floor(GRID_SIZE / 2);
+        const col = Math.max(1, Math.floor((GRID_SIZE - entry.word.length) / 2));
+        writeWord(entry, row, col, "across", grid);
+        return true;
+      }
+
+      const options = [];
+      for (const placed of state.entries) {
+        for (let i = 0; i < entry.word.length; i += 1) {
+          for (let j = 0; j < placed.word.length; j += 1) {
+            if (entry.word[i] !== placed.word[j]) continue;
+            const dir = placed.dir === "across" ? "down" : "across";
+            const row = placed.row + (placed.dir === "down" ? j : 0) - (dir === "down" ? i : 0);
+            const col = placed.col + (placed.dir === "across" ? j : 0) - (dir === "across" ? i : 0);
+            options.push({ row, col, dir });
+          }
+        }
+      }
+
+      options.sort(() => Math.random() - 0.5);
+      for (const option of options) {
+        if (canPlace(entry.word, option.row, option.col, option.dir, grid)) {
+          writeWord(entry, option.row, option.col, option.dir, grid);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function buildPuzzle(terms, requiredCount = levelConfig(state.level).clues) {
+      let best = null;
+
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        const grid = emptyGrid();
+        state.entries = [];
+        state.grid = grid;
+
+        const ordered = attempt % 3 === 0
+          ? [...terms].sort((a, b) => b.word.length - a.word.length)
+          : [...terms].sort(() => Math.random() - 0.5);
+
+        for (const term of ordered) {
+          if (state.entries.length >= requiredCount) break;
+          placeEntry(term, grid);
+        }
+
+        if (!best || state.entries.length > best.entries.length) {
+          best = {
+            grid: grid.map(row => [...row]),
+            entries: state.entries.map(entry => ({ ...entry }))
+          };
+        }
+
+        if (state.entries.length >= requiredCount) break;
+      }
+
+      if (!best || best.entries.length < requiredCount) {
+        renderDebug({
+          error: "connected_layout_failed",
+          requiredCount,
+          bestConnectedCount: best?.entries.length || 0,
+          candidateWords: terms.map(term => term.word)
+        });
+        throw new Error(`Only ${best?.entries.length || 0} of ${requiredCount} words could be connected. Generate again for a stronger word set.`);
+      }
+
+      state.grid = best.grid;
+      state.entries = best.entries;
+
+      let minRow = GRID_SIZE - 1;
+      let minCol = GRID_SIZE - 1;
+      let maxRow = 0;
+      let maxCol = 0;
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        for (let c = 0; c < GRID_SIZE; c += 1) {
+          if (!grid[r][c]) continue;
+          minRow = Math.min(minRow, r);
+          minCol = Math.min(minCol, c);
+          maxRow = Math.max(maxRow, r);
+          maxCol = Math.max(maxCol, c);
+        }
+      }
+
+      state.minRow = Math.max(0, minRow - 1);
+      state.minCol = Math.max(0, minCol - 1);
+      state.maxRow = Math.min(GRID_SIZE - 1, maxRow + 1);
+      state.maxCol = Math.min(GRID_SIZE - 1, maxCol + 1);
+      assignNumbers();
+    }
+
+    function assignNumbers() {
+      const starts = new Map();
+      for (const entry of [...state.entries].sort((a, b) => (a.row - b.row) || (a.col - b.col))) {
+        const key = `${entry.row},${entry.col}`;
+        if (!starts.has(key)) starts.set(key, starts.size + 1);
+        entry.number = starts.get(key);
+      }
+    }
+
+    function entryCells(entry) {
+      return Array.from({ length: entry.word.length }, (_, index) => ({
+        row: entry.row + (entry.dir === "down" ? index : 0),
+        col: entry.col + (entry.dir === "across" ? index : 0)
+      }));
+    }
+
+    function inputValues() {
+      const values = {};
+      document.querySelectorAll(".cell").forEach(cell => {
+        const key = `${cell.dataset.row},${cell.dataset.col}`;
+        values[key] = normalizeWord(cell.querySelector("input").value).slice(0, 1);
+      });
+      return values;
+    }
+
+    function applyValues(values = {}) {
+      document.querySelectorAll(".cell").forEach(cell => {
+        const key = `${cell.dataset.row},${cell.dataset.col}`;
+        const input = cell.querySelector("input");
+        input.value = normalizeWord(values[key] || "").slice(0, 1);
+      });
+      updateScore();
+    }
+
+    function saveProgress(status = "active") {
+      if (!state.entries.length || status === "complete" || status === "failed") return clearProgress();
+      const payload = {
+        status,
+        contextKey: contextKey(),
+        level: state.level,
+        entries: state.entries,
+        grid: state.grid,
+        minRow: state.minRow,
+        minCol: state.minCol,
+        maxRow: state.maxRow,
+        maxCol: state.maxCol,
+        remainingSeconds: state.remainingSeconds,
+        values: inputValues(),
+        savedAt: Date.now()
+      };
+      try { localStorage.setItem(progressKey(), JSON.stringify(payload)); } catch {}
+      refreshResumeButton();
+    }
+
+    function loadProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(progressKey()) || "null");
+        if (!saved || saved.contextKey !== contextKey()) return null;
+        if (!Array.isArray(saved.entries) || !Array.isArray(saved.grid)) return null;
+        if (!saved.remainingSeconds || saved.remainingSeconds <= 0) return null;
+        return saved;
+      } catch {
+        return null;
+      }
+    }
+
+    function clearProgress() {
+      try { localStorage.removeItem(progressKey()); } catch {}
+      refreshResumeButton();
+    }
+
+    function renderCurrentLevelCard(level = 1, seconds = null) {
+      const config = levelConfig(level);
+      const timeText = seconds ? `${formatTime(seconds)} left` : `${config.minutes} minutes`;
+      el("currentLevelCard").innerHTML = `
+        <strong>Current Level ${config.level}</strong>
+        <span>${config.clues} clues</span>
+        <span>${timeText}</span>
+      `;
+    }
+
+    function refreshResumeButton() {
+      const saved = loadProgress();
+      el("resumeBtn").classList.toggle("hidden", !saved);
+      if (saved) {
+        const config = levelConfig(saved.level);
+        renderCurrentLevelCard(saved.level, saved.remainingSeconds);
+        el("setupStatus").textContent = `Resume Level ${saved.level}: ${config.clues} clues, ${formatTime(saved.remainingSeconds)} left.`;
+      } else {
+        renderCurrentLevelCard(1);
+      }
+    }
+
+    function renderBoard() {
+      const rows = state.maxRow - state.minRow + 1;
+      const cols = state.maxCol - state.minCol + 1;
+      const board = el("board");
+      board.style.setProperty("--rows", rows);
+      board.style.setProperty("--cols", cols);
+      board.innerHTML = "";
+
+      const numbers = new Map();
+      for (const entry of state.entries) {
+        numbers.set(`${entry.row},${entry.col}`, entry.number);
+      }
+
+      for (let r = state.minRow; r <= state.maxRow; r += 1) {
+        for (let c = state.minCol; c <= state.maxCol; c += 1) {
+          const letter = state.grid[r][c];
+          const cell = document.createElement("div");
+          if (!letter) {
+            cell.className = "blank";
+            board.appendChild(cell);
+            continue;
+          }
+          cell.className = "cell";
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.dataset.answer = letter;
+          const number = numbers.get(`${r},${c}`);
+          cell.innerHTML = `${number ? `<span class="cell-number">${number}</span>` : ""}<input maxlength="1" inputmode="text" aria-label="Crossword cell" />`;
+          const input = cell.querySelector("input");
+          input.addEventListener("input", event => onCellInput(event, r, c));
+          input.addEventListener("focus", () => selectEntryByCell(r, c));
+          input.addEventListener("keydown", event => onCellKeydown(event, r, c));
+          board.appendChild(cell);
+        }
+      }
+      updateScore();
+    }
+
+    function renderClues() {
+      el("puzzleTitle").textContent = `${ctx.chapterTitle || "Chapter"} Crossword`;
+      for (const dir of ["across", "down"]) {
+        const target = el(dir === "across" ? "acrossClues" : "downClues");
+        target.innerHTML = state.entries
+          .filter(entry => entry.dir === dir)
+          .sort((a, b) => (a.number - b.number) || (a.row - b.row) || (a.col - b.col))
+          .map(entry => `
+            <button class="clue" type="button" data-entry-id="${escapeHtml(entry.id)}">
+              <strong>${entry.number}.</strong> ${escapeHtml(entry.clue)}
+              <small>${entry.word.length} letters</small>
+            </button>
+          `).join("") || `<div class="status">No ${dir} clues in this puzzle.</div>`;
+      }
+      document.querySelectorAll(".clue").forEach(button => {
+        button.addEventListener("click", () => focusEntry(button.dataset.entryId));
+      });
+    }
+
+    function cellAt(row, col) {
+      return document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+    }
+
+    function selectEntryByCell(row, col) {
+      const entry = state.entries.find(item => entryCells(item).some(cell => cell.row === row && cell.col === col));
+      if (entry) focusEntry(entry.id, false);
+    }
+
+    function focusEntry(entryId, moveFocus = true) {
+      state.selectedId = entryId;
+      document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("active"));
+      document.querySelectorAll(".clue").forEach(clue => clue.classList.toggle("selected", clue.dataset.entryId === entryId));
+      const entry = state.entries.find(item => item.id === entryId);
+      if (!entry) return;
+      const cells = entryCells(entry);
+      cells.forEach(cell => cellAt(cell.row, cell.col)?.classList.add("active"));
+      if (moveFocus) cellAt(cells[0].row, cells[0].col)?.querySelector("input")?.focus();
+    }
+
+    function onCellInput(event, row, col) {
+      if (state.locked) return;
+      const input = event.target;
+      input.value = normalizeWord(input.value).slice(0, 1);
+      input.closest(".cell").classList.remove("correct", "wrong");
+      updateScore();
+      saveProgress("active");
+      if (isSolved()) {
+        completeLevel();
+        return;
+      }
+      const entry = state.entries.find(item => item.id === state.selectedId);
+      if (!entry || !input.value) return;
+      const cells = entryCells(entry);
+      const index = cells.findIndex(cell => cell.row === row && cell.col === col);
+      const next = cells[index + 1];
+      if (next) cellAt(next.row, next.col)?.querySelector("input")?.focus();
+    }
+
+    function onCellKeydown(event, row, col) {
+      if (state.locked) return;
+      const entry = state.entries.find(item => item.id === state.selectedId);
+      if (!entry) return;
+      const cells = entryCells(entry);
+      const index = cells.findIndex(cell => cell.row === row && cell.col === col);
+      let target = null;
+      if (event.key === "Backspace" && !event.target.value) target = cells[index - 1];
+      if (event.key === "ArrowRight") target = { row, col: col + 1 };
+      if (event.key === "ArrowLeft") target = { row, col: col - 1 };
+      if (event.key === "ArrowDown") target = { row: row + 1, col };
+      if (event.key === "ArrowUp") target = { row: row - 1, col };
+      if (target) {
+        event.preventDefault();
+        cellAt(target.row, target.col)?.querySelector("input")?.focus();
+      }
+    }
+
+    function solvedCount() {
+      const cells = [...document.querySelectorAll(".cell")];
+      return cells.filter(cell => normalizeWord(cell.querySelector("input").value) === cell.dataset.answer).length;
+    }
+
+    function isSolved() {
+      const total = document.querySelectorAll(".cell").length;
+      return total > 0 && solvedCount() === total;
+    }
+
+    function checkAnswers() {
+      if (state.locked) return;
+      document.querySelectorAll(".cell").forEach(cell => {
+        const value = normalizeWord(cell.querySelector("input").value);
+        cell.classList.toggle("correct", value === cell.dataset.answer);
+        cell.classList.toggle("wrong", Boolean(value) && value !== cell.dataset.answer);
+      });
+      updateScore();
+      saveProgress("active");
+      if (isSolved()) completeLevel();
+    }
+
+    function updateScore() {
+      const cells = [...document.querySelectorAll(".cell")];
+      el("scoreline").textContent = `Level ${state.level} - ${solvedCount()} of ${cells.length} letters correct`;
+    }
+
+    async function saveCrosswordAttempt(status) {
+      const key = `${state.level}:${status}:${state.levelStartTime || "manual"}`;
+      if (state.savedAttemptKeys.has(key)) return;
+      state.savedAttemptKeys.add(key);
+
+      const cells = [...document.querySelectorAll(".cell")];
+      const correct = solvedCount();
+      const total = cells.length;
+      const incorrect = Math.max(0, total - correct);
+      const accuracy = total ? Math.round((correct / total) * 100) : 0;
+      const timeTaken = state.levelStartTime ? Math.round((Date.now() - state.levelStartTime) / 1000) : 0;
+
+      try {
+        await apiFetch("/activity/attempts", {
+          method: "POST",
+          body: JSON.stringify({
+            activityType: "crossword",
+            moduleId: ctx.moduleId,
+            chapterId: ctx.chapterId,
+            score: correct,
+            maxScore: total,
+            accuracy,
+            correctCount: correct,
+            incorrectCount: incorrect,
+            participationCount: total,
+            timeTaken,
+            metadata: {
+              chapterTitle: ctx.chapterTitle,
+              level: state.level,
+              status,
+              clueCount: state.entries.length
+            }
+          })
+        });
+      } catch (error) {
+        console.warn("Could not save crossword leaderboard attempt:", error);
+      }
+    }
+
+    function formatTime(seconds) {
+      const safe = Math.max(0, Number(seconds) || 0);
+      const mins = Math.floor(safe / 60);
+      const secs = safe % 60;
+      return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    function renderTimer() {
+      el("timer").textContent = formatTime(state.remainingSeconds);
+      el("timer").classList.toggle("danger", state.remainingSeconds <= 60);
+    }
+
+    function stopTimer() {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+
+    function startTimer() {
+      stopTimer();
+      renderTimer();
+      state.timerId = setInterval(() => {
+        if (state.locked) return;
+        state.remainingSeconds -= 1;
+        renderTimer();
+        if (state.remainingSeconds % 5 === 0) saveProgress("active");
+        if (state.remainingSeconds <= 0) failLevel();
+      }, 1000);
+    }
+
+    function showSetup(message = "") {
+      stopTimer();
+      el("game").classList.add("hidden");
+      el("setup").classList.remove("hidden");
+      if (message) el("setupStatus").textContent = message;
+      refreshResumeButton();
+    }
+
+    function showGame() {
+      el("setup").classList.add("hidden");
+      el("game").classList.remove("hidden");
+    }
+
+    function showDialog({ title, text, actions }) {
+      stopTimer();
+      state.locked = true;
+      el("dialogTitle").textContent = title;
+      el("dialogText").textContent = text;
+      el("dialogActions").innerHTML = "";
+      actions.forEach(action => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `btn ${action.variant || ""}`.trim();
+        button.textContent = action.label;
+        button.addEventListener("click", () => {
+          hideDialog();
+          action.run();
+        });
+        el("dialogActions").appendChild(button);
+      });
+      el("dialogBackdrop").classList.remove("hidden");
+    }
+
+    function hideDialog() {
+      el("dialogBackdrop").classList.add("hidden");
+    }
+
+    function setStatus(text) {
+      el("setupStatus").textContent = text;
+    }
+
+    function prepareLevel(level, terms, remainingSeconds) {
+      state.level = normalizeLevel(level);
+      const config = levelConfig(state.level);
+      state.remainingSeconds = remainingSeconds || config.minutes * 60;
+      state.locked = false;
+      state.levelStartTime = Date.now();
+      buildPuzzle(terms, config.clues);
+      renderBoard();
+      renderClues();
+      el("levelMeta").textContent = `${config.clues} clues - ${config.minutes} minute limit`;
+      showGame();
+      startTimer();
+      saveProgress("active");
+    }
+
+    async function startLevel(level) {
+      if (!ctx.chapterId && !ctx.chapterIds) {
+        setStatus("No chapter selected. Go back to Learning and select a chapter first.");
+        return;
+      }
+      const config = levelConfig(level);
+      try {
+        setStatus(`Loading Level ${config.level}: ${config.clues} clues...`);
+        const terms = await loadTerms(config.level);
+        if (terms.length < 3) throw new Error("Not enough chapter terms were returned.");
+        prepareLevel(config.level, terms, config.minutes * 60);
+      } catch (error) {
+        showSetup(`Could not generate crossword: ${error.message}`);
+      }
+    }
+
+    function playFromStart() {
+      clearProgress();
+      startLevel(1);
+    }
+
+    function resumeGame() {
+      const saved = loadProgress();
+      if (!saved) {
+        showSetup("No unfinished crossword found.");
+        return;
+      }
+      state.level = normalizeLevel(saved.level);
+      state.entries = saved.entries;
+      state.grid = saved.grid;
+      state.minRow = saved.minRow;
+      state.minCol = saved.minCol;
+      state.maxRow = saved.maxRow;
+      state.maxCol = saved.maxCol;
+      state.remainingSeconds = saved.remainingSeconds;
+      state.locked = false;
+      state.levelStartTime = Date.now() - ((levelConfig(state.level).minutes * 60 - state.remainingSeconds) * 1000);
+      renderBoard();
+      renderClues();
+      applyValues(saved.values || {});
+      const config = levelConfig(state.level);
+      el("levelMeta").textContent = `${config.clues} clues - ${formatTime(state.remainingSeconds)} left`;
+      showGame();
+      startTimer();
+      saveProgress("active");
+    }
+
+    function pauseGame() {
+      if (!state.entries.length) return;
+      saveProgress("paused");
+      showSetup(`Paused Level ${state.level}. Resume when ready.`);
+    }
+
+    function restartLevel() {
+      clearProgress();
+      startLevel(state.level);
+    }
+
+    function quitToMenu(message = "Crossword ended.") {
+      clearProgress();
+      state.entries = [];
+      state.grid = [];
+      state.locked = false;
+      showSetup(message);
+    }
+
+    async function completeLevel() {
+      clearProgress();
+      stopTimer();
+      state.locked = true;
+      document.querySelectorAll(".cell").forEach(cell => cell.classList.add("correct"));
+      await saveCrosswordAttempt("complete");
+      loadPracticeLeaderboard();
+      if (nextLevelExists()) {
+        const next = levelConfig(state.level + 1);
+        showDialog({
+          title: `Level ${state.level} complete`,
+          text: `Next level has ${next.clues} clues and ${next.minutes} minutes.`,
+          actions: [
+            { label: "Next Level", variant: "primary", run: () => startLevel(next.level) },
+            { label: "Quit", run: () => quitToMenu("Level complete. You can play again from Level 1.") }
+          ]
+        });
+        return;
+      }
+      showDialog({
+        title: "Prototype complete",
+        text: "You completed all three crossword levels.",
+        actions: [
+          { label: "Play Again", variant: "primary", run: playFromStart },
+          { label: "Quit", run: () => quitToMenu("All crossword levels completed.") }
+        ]
+      });
+    }
+
+    async function failLevel() {
+      state.remainingSeconds = 0;
+      renderTimer();
+      clearProgress();
+      stopTimer();
+      state.locked = true;
+      await saveCrosswordAttempt("failed");
+      loadPracticeLeaderboard();
+      showDialog({
+        title: "Failed",
+        text: "Time reached 0. Restart this level or quit to the menu.",
+        actions: [
+          { label: "Restart", variant: "primary", run: () => startLevel(state.level) },
+          { label: "Quit", variant: "danger", run: () => quitToMenu("Level failed. Play starts again at Level 1.") }
+        ]
+      });
+    }
+
+    el("playBtn").addEventListener("click", playFromStart);
+    el("resumeBtn").addEventListener("click", resumeGame);
+    el("checkBtn").addEventListener("click", checkAnswers);
+    el("devCompleteBtn").addEventListener("click", completeLevel);
+    el("pauseBtn").addEventListener("click", pauseGame);
+    el("restartBtn").addEventListener("click", restartLevel);
+    window.addEventListener("beforeunload", () => {
+      if (!el("game").classList.contains("hidden") && !state.locked) saveProgress("active");
+    });
+
+    (async function init() {
+      if (!(await requireAuth())) return;
+      el("contextLine").textContent = contextLabel();
+      refreshResumeButton();
+      if (!ctx.chapterId && !ctx.chapterIds) setStatus("No chapter selected. Go back to Learning and select a chapter first.");
+      loadPracticeLeaderboard();
+    })();
+  </script>
+</body>
+</html>

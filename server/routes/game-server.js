@@ -64,6 +64,18 @@ function getBadges({ score, accuracy, levelReached, gameMode }) {
   return badges;
 }
 
+const BADGE_STARS = {
+  first_victory: 1,
+  quiz_master: 2,
+  chapter_conqueror: 3,
+  exam_slayer: 4,
+  skill_expert: 5
+};
+
+function badgeStars(code) {
+  return BADGE_STARS[String(code || "").trim()] || 1;
+}
+
 async function verifyChapterAccess(studentId, chapterId) {
   const { data, error } = await sbAdmin
     .from("chapters")
@@ -94,7 +106,7 @@ router.post("/scores", async (req, res) => {
     const chapterId = String(req.body?.chapterId || "").trim();
     if (!chapterId) return res.status(400).json({ ok: false, error: "chapterId is required" });
 
-    await verifyChapterAccess(studentId, chapterId);
+    const chapter = await verifyChapterAccess(studentId, chapterId);
 
     const score = clampNumber(req.body?.score, 0, 100000, 0);
     const accuracy = clampNumber(req.body?.accuracy, 0, 100, 0);
@@ -121,6 +133,38 @@ router.post("/scores", async (req, res) => {
 
     if (scoreError) throw scoreError;
 
+    const totalAttempts = clampNumber(req.body?.attempts, 0, 100000, 0);
+    const correctCount = clampNumber(req.body?.correctCount || req.body?.correct_count, 0, 100000, 0);
+    const incorrectCount = totalAttempts && correctCount <= totalAttempts
+      ? totalAttempts - correctCount
+      : 0;
+
+    const { error: activityError } = await sbAdmin
+      .from("activity_attempts")
+      .insert([{
+        activity_type: "invader",
+        student_id: studentId,
+        module_id: chapter.module_id || null,
+        chapter_id: chapterId,
+        score,
+        max_score: 0,
+        accuracy,
+        correct_count: correctCount,
+        incorrect_count: incorrectCount,
+        participation_count: levelReached,
+        time_taken: timeTaken,
+        metadata: {
+          gameScoreId: scoreRow.id,
+          xpEarned,
+          levelReached,
+          gameMode
+        }
+      }]);
+
+    if (activityError) {
+      console.warn("Could not mirror invader score to activity_attempts:", activityError.message);
+    }
+
     for (const reward of skillRewards.slice(0, 8)) {
       const skillName = normalizeSkillName(reward?.skill);
       const xp = clampNumber(reward?.xp, 0, 10000, 0);
@@ -130,6 +174,7 @@ router.post("/scores", async (req, res) => {
         .from("student_skill_xp")
         .select("id, xp")
         .eq("student_id", studentId)
+        .eq("chapter_id", chapterId)
         .eq("skill_name", skillName)
         .maybeSingle();
 
@@ -141,7 +186,7 @@ router.post("/scores", async (req, res) => {
       } else {
         await sbAdmin
           .from("student_skill_xp")
-          .insert([{ student_id: studentId, skill_name: skillName, xp }]);
+          .insert([{ student_id: studentId, chapter_id: chapterId, skill_name: skillName, xp }]);
       }
     }
 
@@ -151,9 +196,10 @@ router.post("/scores", async (req, res) => {
         .from("student_badges")
         .upsert([{
           student_id: studentId,
+          chapter_id: chapterId,
           badge_code: badge.code,
           badge_name: badge.name
-        }], { onConflict: "student_id,badge_code" });
+        }], { onConflict: "student_id,chapter_id,badge_code" });
     }
 
     res.json({ ok: true, score: scoreRow, badges: awardedBadges });
@@ -241,23 +287,38 @@ router.get("/leaderboard", async (req, res) => {
 router.get("/profile", async (req, res) => {
   try {
     const studentId = req.user.id;
+    const chapterId = String(req.query?.chapterId || "").trim();
+
+    let skillQuery = sbAdmin
+      .from("student_skill_xp")
+      .select("skill_name, xp, updated_at, chapter_id")
+      .eq("student_id", studentId)
+      .order("xp", { ascending: false });
+
+    let badgeQuery = sbAdmin
+      .from("student_badges")
+      .select("badge_code, badge_name, earned_at, chapter_id")
+      .eq("student_id", studentId)
+      .order("earned_at", { ascending: false });
+
+    let bestQuery = sbAdmin
+      .from("game_scores")
+      .select("score, accuracy, time_taken, xp_earned, level_reached, game_mode, created_at, chapter_id")
+      .eq("student_id", studentId)
+      .order("score", { ascending: false })
+      .limit(5);
+
+    if (chapterId) {
+      await verifyChapterAccess(studentId, chapterId);
+      skillQuery = skillQuery.eq("chapter_id", chapterId);
+      badgeQuery = badgeQuery.eq("chapter_id", chapterId);
+      bestQuery = bestQuery.eq("chapter_id", chapterId);
+    }
+
     const [xpResult, badgesResult, bestResult] = await Promise.all([
-      sbAdmin
-        .from("student_skill_xp")
-        .select("skill_name, xp, updated_at")
-        .eq("student_id", studentId)
-        .order("xp", { ascending: false }),
-      sbAdmin
-        .from("student_badges")
-        .select("badge_code, badge_name, earned_at")
-        .eq("student_id", studentId)
-        .order("earned_at", { ascending: false }),
-      sbAdmin
-        .from("game_scores")
-        .select("score, accuracy, time_taken, xp_earned, level_reached, game_mode, created_at")
-        .eq("student_id", studentId)
-        .order("score", { ascending: false })
-        .limit(5)
+      skillQuery,
+      badgeQuery,
+      bestQuery
     ]);
 
     if (xpResult.error) throw xpResult.error;
@@ -267,7 +328,10 @@ router.get("/profile", async (req, res) => {
     res.json({
       ok: true,
       skills: xpResult.data || [],
-      badges: badgesResult.data || [],
+      badges: (badgesResult.data || []).map(badge => ({
+        ...badge,
+        badge_stars: badgeStars(badge.badge_code)
+      })),
       best_scores: bestResult.data || []
     });
   } catch (error) {

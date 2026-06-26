@@ -669,7 +669,6 @@
       <div class="top-question-text" id="questionText">Choose a challenge mode to begin.</div>
     </div>
     <button class="btn hidden" type="button" id="pauseBtn">Pause</button>
-    <button class="btn" type="button" id="profileBtn">Leaderboard</button>
   </header>
 
   <main class="shell">
@@ -791,7 +790,7 @@
       Object.entries(ctx).forEach(([key, value]) => {
         if (value) params.set(key, value);
       });
-      window.location.href = `invader-leaderboard.html?${params.toString()}`;
+      window.location.href = `leaderboard.html?${params.toString()}`;
     }
 
     async function getToken() {
@@ -1079,7 +1078,6 @@
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             ${paused ? `<button class="btn primary" type="button" id="resumeBtn">Resume</button>` : ""}
-            <button class="btn" type="button" onclick="openLeaderboard()">Leaderboard</button>
             <button class="btn" type="button" onclick="goBackToLearning()">Back</button>
           </div>
         </div>
@@ -1366,6 +1364,8 @@
             xpEarned: summary.xp,
             levelReached: summary.level,
             gameMode: state.gameMode,
+            attempts: state.attempts,
+            correctCount: state.correct,
             skillRewards: skillRewards()
           })
         });
@@ -1382,7 +1382,6 @@
       state.paused = false;
       clearInterval(state.pauseCountdownTimer);
       el("pauseBtn").classList.add("hidden");
-      el("profileBtn").classList.remove("hidden");
       document.body.classList.remove("game-active");
       clearEnemies();
       const timeTaken = state.startTime ? Math.round((Date.now() - state.startTime - state.pausedMs) / 1000) : 0;
@@ -1402,7 +1401,6 @@
           </div>
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
             <button class="btn primary" type="button" onclick="location.reload()">Play Again</button>
-            <button class="btn" type="button" onclick="openLeaderboard()">Leaderboard</button>
           </div>
       `;
       showStatsOverlay({
@@ -1455,7 +1453,6 @@
         el("setup").classList.add("hidden");
         el("gameWrap").classList.remove("hidden");
         el("pauseBtn").classList.remove("hidden");
-        el("profileBtn").classList.add("hidden");
         document.body.classList.add("game-active");
         updateHud();
         renderQuestion();
@@ -1475,11 +1472,11 @@
       if (!el("leaderboard")) return;
       if (!ctx.chapterId) return;
       try {
-        const data = await apiFetch(`/game/leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&metric=${encodeURIComponent(metric)}&limit=8`);
+        const data = await apiFetch(`/activity/practice-leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&limit=8`);
         const rows = data.leaderboard || [];
         el("leaderboard").innerHTML = rows.length ? rows.map(row => {
-          const value = metric === "fastest" ? formatTime(row.time_taken) : metric === "accuracy" ? `${Math.round(row.accuracy)}%` : metric === "xp" ? row.xp_earned : row.score;
-          return `<div class="row"><strong>#${row.rank}</strong><span>${escapeHtml(row.student_name)}</span><span class="pill">${value}</span></div>`;
+          const value = `${row.total_score || row.normalized_score} (${Math.round(row.average_accuracy || 0)}%)`;
+          return `<div class="row"><strong>#${row.rank}</strong><span>${escapeHtml(row.student_name)} - ${escapeHtml(row.activity_label)}</span><span class="pill">${value}</span></div>`;
         }).join("") : `<div class="muted">No scores yet.</div>`;
       } catch (error) {
         el("leaderboard").innerHTML = `<div class="muted">Leaderboard unavailable.</div>`;
@@ -1489,15 +1486,16 @@
     async function loadProfile() {
       if (!el("skillXp") || !el("badges")) return;
       try {
-        const data = await apiFetch("/game/profile");
+        const query = ctx.chapterId ? `?chapterId=${encodeURIComponent(ctx.chapterId)}` : "";
+        const data = await apiFetch(`/game/profile${query}`);
         const skills = data.skills || [];
         const badges = data.badges || [];
         el("skillXp").innerHTML = skills.length ? skills.slice(0, 6).map(row => (
           `<div class="row"><span>XP</span><span>${escapeHtml(row.skill_name)}</span><span class="pill">${row.xp}</span></div>`
-        )).join("") : `<div class="muted">Play a round to earn XP.</div>`;
+        )).join("") : `<div class="muted">No skills earned for this chapter yet.</div>`;
         el("badges").innerHTML = badges.length ? badges.slice(0, 8).map(row => (
           `<div class="row"><span>🏅</span><span>${escapeHtml(row.badge_name)}</span><span class="muted">${new Date(row.earned_at).toLocaleDateString()}</span></div>`
-        )).join("") : `<div class="muted">No badges yet.</div>`;
+        )).join("") : `<div class="muted">No badges earned for this chapter yet.</div>`;
       } catch (error) {
         el("skillXp").innerHTML = `<div class="muted">Stats unavailable.</div>`;
         el("badges").innerHTML = `<div class="muted">Badges unavailable.</div>`;
@@ -1524,8 +1522,6 @@
       event.stopPropagation();
       togglePauseFromMobile();
     }, { passive: false });
-    el("profileBtn").textContent = "Leaderboard";
-    el("profileBtn").addEventListener("click", openLeaderboard);
     document.querySelectorAll("[data-metric]").forEach(button => {
       button.addEventListener("click", () => {
         document.querySelectorAll("[data-metric]").forEach(btn => btn.classList.remove("active"));

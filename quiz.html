@@ -51,19 +51,19 @@
       if (!container || !ctx.chapterId) return;
       try {
         const token = await getToken();
-        const response = await fetch(`${API_BASE}/activity/leaderboard?activityType=${encodeURIComponent(activityType)}&chapterId=${encodeURIComponent(ctx.chapterId)}&limit=8`, {
+        const response = await fetch(`${API_BASE}/activity/practice-leaderboard?chapterId=${encodeURIComponent(ctx.chapterId)}&limit=8`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await response.json();
         const rows = data.leaderboard || [];
         container.innerHTML = rows.length ? rows.map(row => `
           <div class="stat-row">
-            <span>#${row.rank} ${escapeHtml(row.student_name)}</span>
-            <span>${row.score}/${(row.correct_count || 0) + (row.incorrect_count || 0) || row.score} (${Math.round(row.accuracy || 0)}%)</span>
+            <span>#${row.rank} ${escapeHtml(row.student_name)} - ${escapeHtml(row.activity_label)}</span>
+            <span>${row.total_score || row.normalized_score} (${Math.round(row.average_accuracy || 0)}%)</span>
           </div>
-        `).join("") : `<div class="hint">No quiz leaderboard scores yet.</div>`;
+        `).join("") : `<div class="hint">No practice leaderboard scores yet.</div>`;
       } catch (error) {
-        console.warn("Could not load quiz leaderboard:", error);
+        console.warn("Could not load practice leaderboard:", error);
         container.innerHTML = `<div class="hint">Leaderboard unavailable.</div>`;
       }
     }
@@ -152,7 +152,7 @@
           <button class="start-btn" id="startQuizBtn">🚀 Start AI-Generated Quiz</button>
           <div class="tool-sub">Questions are loaded from the saved question bank. AI only fills a small gap when needed.</div>
           <div class="panel" style="padding:14px;box-shadow:none;">
-            <div class="section-title" style="margin-top:0;">Quiz Leaderboard</div>
+            <div class="section-title" style="margin-top:0;">Practice Leaderboard</div>
             <div id="quizLeaderboard"><div class="hint">Loading leaderboard...</div></div>
           </div>
         </div>
@@ -472,7 +472,7 @@
           </div>
           ${reviewHtml}
           <div class="panel" style="padding:14px;box-shadow:none;margin-top:20px;text-align:left;">
-            <div class="section-title" style="margin-top:0;">Quiz Leaderboard</div>
+            <div class="section-title" style="margin-top:0;">Practice Leaderboard</div>
             <div id="quizResultsLeaderboard"><div class="hint">Updating leaderboard...</div></div>
           </div>
           <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
